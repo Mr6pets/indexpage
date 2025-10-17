@@ -47,17 +47,17 @@ const searchQuery = ref('')
 const sites = ref([
   {
     id: 1,
+    name: 'GuluWater 官网',
+    description: '站点主页',
+    url: 'http://www.vitepress.guluwater.com/',
+    icon: '💧'
+  },
+  {
+    id: 2,
     name: 'Office Tools',
     description: '办公工具集',
     url: 'http://officetools.guluwater.com/',
     icon: '🛠️'
-  },
-  {
-    id: 2,
-    name: 'GuluWater 官网',
-    description: '站点主页',
-    url: 'http://www.guluwater.com/',
-    icon: '💧'
   },
   {
     id: 3,
