@@ -48,44 +48,51 @@ const sites = ref([
   {
     id: 1,
     name: 'Office Tools',
-    description: '办公工具集 - 文件处理和办公辅助工具',
+    description: '办公工具集',
     url: 'http://officetools.guluwater.com/',
     icon: '🛠️'
   },
   {
     id: 2,
-    name: 'GuluWater',
-    description: 'GuluWater 博客 - Vue.js、TypeScript 技术分享',
+    name: 'GuluWater 官网',
+    description: '站点主页',
     url: 'http://www.guluwater.com/',
     icon: '💧'
   },
   {
     id: 3,
-    name: 'GitHub',
-    description: '代码托管和协作平台',
-    url: 'https://github.com',
-    icon: '🐙'
+    name: 'General Methods Utils',
+    description: '通用方法工具集',
+    url: 'http://generalmethodsutils.guluwater.com/',
+    icon: '🧰'
   },
   {
     id: 4,
-    name: 'Vue.js',
-    description: 'Vue.js 官方文档',
-    url: 'https://vuejs.org',
-    icon: '💚'
+    name: 'Online Interface Lite',
+    description: '在线接口（轻量版）',
+    url: 'http://onlineinterfacelite.guluwater.com/',
+    icon: '🔌'
   },
   {
     id: 5,
-    name: 'MDN Web Docs',
-    description: 'Web 开发者资源和文档',
-    url: 'https://developer.mozilla.org',
-    icon: '📚'
+    name: 'Online Interface Full',
+    description: '在线接口（完整版）',
+    url: 'http://onlineinterfacefull.guluwater.com/',
+    icon: '🧩'
   },
   {
     id: 6,
-    name: 'Stack Overflow',
-    description: '程序员问答社区',
-    url: 'https://stackoverflow.com',
-    icon: '❓'
+    name: 'Lite Image Previewer',
+    description: '轻量图像预览器',
+    url: 'http://liteimagepreviewer.guluwater.com/',
+    icon: '🖼️'
+  },
+  {
+    id: 7,
+    name: 'Papercraft',
+    description: '纸艺工具',
+    url: 'http://papercraft.guluwater.com/',
+    icon: '✂️'
   }
 ])
 
@@ -183,6 +190,11 @@ const openSite = (url) => {
   transform: translateY(-8px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   background: rgba(255, 255, 255, 1);
+}
+
+.nav-card:active {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
 }
 
 .card-icon {
