@@ -3,7 +3,7 @@
     <div class="header">
       <h1 class="title">
         <span class="icon">🧭</span>
-        我的导航页面
+        咕噜水（guluwater）导航页面
       </h1>
       <p class="subtitle">快速访问常用网站</p>
     </div>
@@ -47,9 +47,9 @@ const searchQuery = ref('')
 const sites = ref([
   {
     id: 1,
-    name: 'GuluWater 官网',
-    description: '站点主页',
-    url: 'http://www.vitepress.guluwater.com/',
+    name: 'VitePress 博客',
+    description: '专业的 Vue 3 博客',
+    url: 'http://vitepress.guluwater.com/',
     icon: '💧'
   },
   {
@@ -93,6 +93,13 @@ const sites = ref([
     description: '纸艺工具',
     url: 'http://papercraft.guluwater.com/',
     icon: '✂️'
+  },
+  {
+    id: 8,
+    name: 'Mock Data Generator',
+    description: '智能数据模拟生成器',
+    url: 'http://mockdatagenerator.guluwater.com/',
+    icon: '🔄'
   }
 ])
 
