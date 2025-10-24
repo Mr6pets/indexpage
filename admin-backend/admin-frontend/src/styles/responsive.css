@@ -1,0 +1,381 @@
+/* 响应式设计样式 */
+
+/* 平板端适配 (768px - 1024px) */
+@media (max-width: 1024px) {
+  .layout-container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100% !important;
+    height: auto;
+    position: relative;
+    transform: none !important;
+  }
+  
+  .sidebar.collapsed {
+    height: 60px;
+    overflow: hidden;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+  
+  .header {
+    padding: 0 16px;
+  }
+  
+  .breadcrumb {
+    display: none;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
+  }
+  
+  .chart-container {
+    height: 300px !important;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  .el-table {
+    min-width: 800px;
+  }
+}
+
+/* 手机端适配 (< 768px) */
+@media (max-width: 768px) {
+  .layout-container {
+    padding: 0;
+  }
+  
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar.show {
+    transform: translateX(0);
+  }
+  
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+  }
+  
+  .sidebar-overlay.show {
+    display: block;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 8px;
+  }
+  
+  .header {
+    padding: 0 12px;
+    height: 50px;
+  }
+  
+  .header .el-button {
+    padding: 8px 12px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .page-header .page-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 16px !important;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 24px !important;
+  }
+  
+  .chart-container {
+    height: 250px !important;
+    margin: 12px 0;
+  }
+  
+  .content-card {
+    margin: 8px 0;
+    padding: 12px;
+  }
+  
+  .search-form {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .search-form .el-form-item {
+    margin-bottom: 0;
+  }
+  
+  .table-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .table-actions .el-button {
+    width: 100%;
+  }
+  
+  .el-table .cell {
+    padding: 8px 4px;
+    font-size: 12px;
+  }
+  
+  .el-pagination {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .el-pagination .el-pager {
+    flex-wrap: wrap;
+  }
+  
+  .dialog-mobile .el-dialog {
+    width: 95% !important;
+    margin: 20px auto;
+  }
+  
+  .dialog-mobile .el-dialog__body {
+    padding: 16px;
+  }
+  
+  .form-mobile .el-form-item {
+    margin-bottom: 16px;
+  }
+  
+  .form-mobile .el-form-item__label {
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+}
+
+/* 小屏手机适配 (< 480px) */
+@media (max-width: 480px) {
+  .header {
+    padding: 0 8px;
+    height: 48px;
+  }
+  
+  .header .header-title {
+    font-size: 16px;
+  }
+  
+  .main-content {
+    padding: 0 4px;
+  }
+  
+  .content-card {
+    padding: 8px;
+    margin: 4px 0;
+  }
+  
+  .page-header .page-title {
+    font-size: 18px;
+  }
+  
+  .stat-card {
+    padding: 12px !important;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 20px !important;
+  }
+  
+  .stat-card .stat-label {
+    font-size: 12px;
+  }
+  
+  .chart-container {
+    height: 200px !important;
+  }
+  
+  .el-button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .el-input {
+    font-size: 14px;
+  }
+  
+  .el-table .cell {
+    padding: 6px 2px;
+    font-size: 11px;
+  }
+  
+  .dialog-mobile .el-dialog {
+    width: 98% !important;
+    margin: 10px auto;
+  }
+}
+
+/* 横屏适配 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .sidebar {
+    width: 200px !important;
+  }
+  
+  .main-content {
+    margin-left: 200px !important;
+  }
+  
+  .chart-container {
+    height: 200px !important;
+  }
+}
+
+/* 高分辨率屏幕适配 */
+@media (min-width: 1920px) {
+  .layout-container {
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  .chart-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 打印样式 */
+@media print {
+  .sidebar,
+  .header,
+  .page-actions,
+  .table-actions,
+  .el-pagination {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0;
+  }
+  
+  .content-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+  
+  .chart-container {
+    height: 300px !important;
+  }
+}
+
+/* 通用响应式工具类 */
+.hidden-xs {
+  display: block;
+}
+
+.hidden-sm {
+  display: block;
+}
+
+.hidden-md {
+  display: block;
+}
+
+.hidden-lg {
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .hidden-xs {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .hidden-sm {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .hidden-md {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .hidden-lg {
+    display: none !important;
+  }
+}
+
+.visible-xs {
+  display: none;
+}
+
+.visible-sm {
+  display: none;
+}
+
+.visible-md {
+  display: none;
+}
+
+.visible-lg {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .visible-xs {
+    display: block !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .visible-sm {
+    display: block !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .visible-md {
+    display: block !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .visible-lg {
+    display: block !important;
+  }
+}
