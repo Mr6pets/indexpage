@@ -72,6 +72,53 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/stats', require('./routes/stats'));
 
+// API 根路径 - 显示API文档
+app.get('/api', (req, res) => {
+  res.json({
+    success: true,
+    message: '咕噜水导航后台管理API',
+    version: '1.0.0',
+    endpoints: {
+      auth: {
+        login: 'POST /api/auth/login',
+        logout: 'POST /api/auth/logout',
+        profile: 'GET /api/auth/profile'
+      },
+      categories: {
+        list: 'GET /api/categories',
+        create: 'POST /api/categories',
+        update: 'PUT /api/categories/:id',
+        delete: 'DELETE /api/categories/:id'
+      },
+      sites: {
+        list: 'GET /api/sites',
+        create: 'POST /api/sites',
+        update: 'PUT /api/sites/:id',
+        delete: 'DELETE /api/sites/:id',
+        click: 'POST /api/sites/:id/click'
+      },
+      users: {
+        list: 'GET /api/users',
+        create: 'POST /api/users',
+        update: 'PUT /api/users/:id',
+        delete: 'DELETE /api/users/:id'
+      },
+      settings: {
+        list: 'GET /api/settings',
+        update: 'PUT /api/settings/:key',
+        init: 'POST /api/settings/init'
+      },
+      stats: {
+        overview: 'GET /api/stats/overview',
+        ranking: 'GET /api/stats/ranking',
+        behavior: 'GET /api/stats/user-behavior'
+      }
+    },
+    documentation: 'https://github.com/guluwater/navigation-admin',
+    status: 'running'
+  });
+});
+
 // 404 处理
 app.use((req, res) => {
   res.status(404).json({

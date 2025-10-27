@@ -29,8 +29,8 @@ router.get('/overview', authenticateToken, async (req, res) => {
       const users = userOperations.getAll();
       
       // 计算统计数据
-      const activeSites = sites.filter(site => site.is_active);
-      const activeCategories = categories.filter(cat => cat.is_active);
+      const activeSites = sites.filter(site => site.status === 'active');
+      const activeCategories = categories.filter(cat => cat.status === 'active');
       
       totalSites = [{ total: activeSites.length }];
       totalCategories = [{ total: activeCategories.length }];

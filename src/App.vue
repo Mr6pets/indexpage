@@ -1,11 +1,21 @@
 <template>
   <div class="navigation-container">
     <div class="header">
-      <h1 class="title">
-        <span class="icon">🧭</span>
-        咕噜水（guluwater）导航页面
-      </h1>
-      <p class="subtitle">快速访问常用网站</p>
+      <div class="header-content">
+        <div class="title-section">
+          <h1 class="title">
+            <span class="icon">🧭</span>
+            咕噜水（guluwater）导航页面
+          </h1>
+          <p class="subtitle">快速访问常用网站</p>
+        </div>
+        <div class="admin-section">
+          <button class="admin-btn" @click="goToAdmin">
+            <span class="admin-icon">⚙️</span>
+            后台管理
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="search-container">
@@ -324,6 +334,10 @@ const filteredCategories = computed(() => {
 const openSite = (url) => {
   window.open(url, '_blank')
 }
+
+const goToAdmin = () => {
+  window.open('http://localhost:5173', '_blank')
+}
 </script>
 
 <style scoped>
@@ -335,8 +349,62 @@ const openSite = (url) => {
 }
 
 .header {
-  text-align: center;
   margin-bottom: 3rem;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.title-section {
+  text-align: left;
+}
+
+.admin-section {
+  display: flex;
+  align-items: center;
+}
+
+.admin-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.admin-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.admin-icon {
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .title-section {
+    text-align: center;
+  }
 }
 
 .title {
