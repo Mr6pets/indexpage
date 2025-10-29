@@ -252,11 +252,25 @@ const loadSites = async () => {
     const response = await request.get('/sites', { params })
     console.log('API响应:', response.data)
     
-    if (response.data.success) {
-      sites.value = response.data.data.sites
-      total.value = response.data.data.total
-      console.log('网站数据加载成功:', sites.value.length, '个网站')
+    // 处理不同的响应格式
+    let sitesData, totalData;
+    
+    if (response.data.success && response.data.data) {
+      // 标准格式: {success: true, data: {sites: [...], pagination: {...}}}
+      sitesData = response.data.data.sites;
+      totalData = response.data.data.pagination.total;
+    } else if (response.data.sites) {
+      // 直接格式: {sites: [...], pagination: {...}}
+      sitesData = response.data.sites;
+      totalData = response.data.pagination.total;
+    } else {
+      console.error('未知的API响应格式:', response.data);
+      return;
     }
+    
+    sites.value = sitesData;
+    total.value = totalData;
+    console.log('网站数据加载成功:', sites.value.length, '个网站');
   } catch (error) {
     console.error('加载网站列表失败:', error)
     ElMessage.error('加载网站列表失败')

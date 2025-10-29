@@ -257,22 +257,40 @@ const loadDashboardData = async () => {
     
     // 获取统计数据
     const response = await request.get('/stats/overview')
+    console.log('仪表盘API响应:', response.data)
     
-    if (response.data.success) {
-      const data = response.data.data
-      
-      // 更新统计数据
-      statsData.value[0].value = data.total_sites || 0
-      statsData.value[1].value = data.total_categories || 0
-      statsData.value[2].value = data.total_users || 0
-      statsData.value[3].value = data.total_clicks || 0
-      
-      // 可以根据需要计算变化百分比
-      // 这里暂时设为0，后续可以添加历史数据对比
-      statsData.value.forEach(stat => {
-        stat.change = 0
-      })
+    // 处理不同的响应格式
+    let overviewData;
+    
+    if (response.data.success && response.data.data) {
+      // 标准格式: {success: true, data: {overview: {...}}}
+      overviewData = response.data.data.overview;
+    } else if (response.data.overview) {
+      // 直接格式: {overview: {...}}
+      overviewData = response.data.overview;
+    } else {
+      console.error('未知的API响应格式:', response.data);
+      return;
     }
+    
+    // 更新统计数据
+    statsData.value[0].value = overviewData.total_sites || 0
+    statsData.value[1].value = overviewData.total_categories || 0
+    statsData.value[2].value = overviewData.total_users || 0
+    statsData.value[3].value = overviewData.total_clicks || 0
+    
+    console.log('仪表盘数据更新成功:', {
+      sites: statsData.value[0].value,
+      categories: statsData.value[1].value,
+      users: statsData.value[2].value,
+      clicks: statsData.value[3].value
+    })
+    
+    // 可以根据需要计算变化百分比
+    // 这里暂时设为0，后续可以添加历史数据对比
+    statsData.value.forEach(stat => {
+      stat.change = 0
+    })
     
     loading.value = false
   } catch (err) {
