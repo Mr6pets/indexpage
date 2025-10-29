@@ -27,8 +27,21 @@
       >
     </div>
 
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">正在加载数据...</p>
+    </div>
+
+    <!-- 错误状态 -->
+    <div v-else-if="error" class="error-container">
+      <div class="error-icon">⚠️</div>
+      <p class="error-text">{{ error }}</p>
+      <button class="retry-btn" @click="initializeData">重试</button>
+    </div>
+
     <!-- 分类显示 -->
-    <div class="categories-container">
+    <div v-else class="categories-container">
       <div v-for="category in filteredCategories" :key="category.name" class="category-section">
         <div class="category-header">
           <span class="category-icon">{{ category.icon }}</span>
@@ -61,259 +74,104 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const searchQuery = ref('')
+const categories = ref([])
+const loading = ref(true)
+const error = ref(null)
 
-// 按分类组织的网站数据
-const categories = ref([
-  {
-    name: '我的服务',
-    icon: '💧',
-    sites: [
-      {
-        id: 1,
-        name: 'VitePress 博客',
-        description: '专业的 Vue 3 博客',
-        url: 'http://vitepress.guluwater.com/',
-        icon: '💧'
-      },
-      {
-        id: 2,
-        name: 'Office Tools',
-        description: '办公工具集',
-        url: 'http://officetools.guluwater.com/',
-        icon: '🛠️'
-      },
-      {
-        id: 3,
-        name: 'General Methods Utils',
-        description: '通用方法工具集',
-        url: 'http://generalmethodsutils.guluwater.com/',
-        icon: '🧰'
-      },
-      {
-        id: 4,
-        name: 'Online Interface Lite',
-        description: '在线接口（轻量版）',
-        url: 'http://onlineinterfacelite.guluwater.com/',
-        icon: '🔌'
-      },
-      {
-        id: 5,
-        name: 'Online Interface Full',
-        description: '在线接口（完整版）',
-        url: 'http://onlineinterfacefull.guluwater.com/',
-        icon: '🧩'
-      },
-      {
-        id: 6,
-        name: 'Lite Image Previewer',
-        description: '轻量图像预览器',
-        url: 'http://liteimagepreviewer.guluwater.com/',
-        icon: '🖼️'
-      },
-      {
-        id: 7,
-        name: 'Papercraft',
-        description: '纸艺工具',
-        url: 'http://papercraft.guluwater.com/',
-        icon: '✂️'
-      },
-      {
-        id: 8,
-        name: 'Mock Data Generator',
-        description: '智能数据模拟生成器',
-        url: 'http://mockdatagenerator.guluwater.com/',
-        icon: '🔄'
-      }
-    ]
-  },
-  {
-    name: '前端框架',
-    icon: '⚛️',
-    sites: [
-      {
-        id: 9,
-        name: 'Vue.js',
-        description: '渐进式 JavaScript 框架',
-        url: 'https://vuejs.org/',
-        icon: '💚'
-      },
-      {
-        id: 10,
-        name: 'React',
-        description: '用于构建用户界面的 JavaScript 库',
-        url: 'https://react.dev/',
-        icon: '⚛️'
-      },
-      {
-        id: 11,
-        name: 'Angular',
-        description: '现代 Web 开发平台',
-        url: 'https://angular.io/',
-        icon: '🅰️'
-      },
-      {
-        id: 12,
-        name: 'Svelte',
-        description: '编译时优化的前端框架',
-        url: 'https://svelte.dev/',
-        icon: '🔥'
-      }
-    ]
-  },
-  {
-    name: '开发工具',
-    icon: '🛠️',
-    sites: [
-      {
-        id: 13,
-        name: 'GitHub',
-        description: '全球最大的代码托管平台',
-        url: 'https://github.com/',
-        icon: '🐙'
-      },
-      {
-        id: 14,
-        name: 'GitLab',
-        description: 'DevOps 生命周期工具',
-        url: 'https://gitlab.com/',
-        icon: '🦊'
-      },
-      {
-        id: 15,
-        name: 'VS Code',
-        description: '轻量级代码编辑器',
-        url: 'https://code.visualstudio.com/',
-        icon: '💙'
-      },
-      {
-        id: 16,
-        name: 'Vite',
-        description: '下一代前端构建工具',
-        url: 'https://vitejs.dev/',
-        icon: '⚡'
-      },
-      {
-        id: 17,
-        name: 'Webpack',
-        description: '模块打包工具',
-        url: 'https://webpack.js.org/',
-        icon: '📦'
-      }
-    ]
-  },
-  {
-    name: '学习资源',
-    icon: '📚',
-    sites: [
-      {
-        id: 18,
-        name: 'MDN Web Docs',
-        description: 'Web 开发权威文档',
-        url: 'https://developer.mozilla.org/',
-        icon: '📚'
-      },
-      {
-        id: 19,
-        name: 'W3Schools',
-        description: 'Web 技术教程网站',
-        url: 'https://www.w3schools.com/',
-        icon: '🎓'
-      },
-      {
-        id: 20,
-        name: '菜鸟教程',
-        description: '编程入门教程网站',
-        url: 'https://www.runoob.com/',
-        icon: '🐣'
-      },
-      {
-        id: 21,
-        name: 'freeCodeCamp',
-        description: '免费编程学习平台',
-        url: 'https://www.freecodecamp.org/',
-        icon: '🏕️'
-      }
-    ]
-  },
-  {
-    name: '技术社区',
-    icon: '💬',
-    sites: [
-      {
-        id: 22,
-        name: 'Stack Overflow',
-        description: '程序员问答社区',
-        url: 'https://stackoverflow.com/',
-        icon: '📋'
-      },
-      {
-        id: 23,
-        name: '掘金',
-        description: '中文技术社区',
-        url: 'https://juejin.cn/',
-        icon: '⛏️'
-      },
-      {
-        id: 24,
-        name: '博客园',
-        description: '开发者技术博客平台',
-        url: 'https://www.cnblogs.com/',
-        icon: '📝'
-      },
-      {
-        id: 25,
-        name: 'CSDN',
-        description: '中国软件开发者网络',
-        url: 'https://www.csdn.net/',
-        icon: '💻'
-      }
-    ]
-  },
-  {
-    name: '实用工具',
-    icon: '🔧',
-    sites: [
-      {
-        id: 26,
-        name: 'npm',
-        description: 'Node.js 包管理器',
-        url: 'https://www.npmjs.com/',
-        icon: '📦'
-      },
-      {
-        id: 27,
-        name: 'Can I Use',
-        description: '浏览器兼容性查询',
-        url: 'https://caniuse.com/',
-        icon: '🔍'
-      },
-      {
-        id: 28,
-        name: 'CodePen',
-        description: '在线代码编辑器',
-        url: 'https://codepen.io/',
-        icon: '✏️'
-      },
-      {
-        id: 29,
-        name: 'Figma',
-        description: '协作式设计工具',
-        url: 'https://www.figma.com/',
-        icon: '🎨'
-      },
-      {
-        id: 30,
-        name: 'Postman',
-        description: 'API 开发测试工具',
-        url: 'https://www.postman.com/',
-        icon: '📮'
-      }
-    ]
+// API 基础 URL
+const API_BASE_URL = 'http://localhost:3001/api'
+
+// 获取分类数据
+const fetchCategories = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/categories`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const data = await response.json()
+    return data.success ? data.data.categories : []
+  } catch (err) {
+    console.error('获取分类数据失败:', err)
+    throw err
   }
-])
+}
+
+// 获取网站数据
+const fetchSites = async () => {
+  try {
+    // 设置一个足够大的limit来获取所有网站，或者使用特殊参数
+    const response = await fetch(`${API_BASE_URL}/sites?limit=1000`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const data = await response.json()
+    return data.success ? data.data.sites : []
+  } catch (err) {
+    console.error('获取网站数据失败:', err)
+    throw err
+  }
+}
+
+// 组织数据：将网站按分类分组
+const organizeData = (categoriesData, sitesData) => {
+  return categoriesData.map(category => ({
+    name: category.name,
+    icon: category.icon,
+    sites: sitesData.filter(site => site.category_id === category.id)
+  })).filter(category => category.sites.length > 0) // 只显示有网站的分类
+}
+
+// 初始化数据
+const initializeData = async () => {
+  try {
+    loading.value = true
+    error.value = null
+    
+    const [categoriesData, sitesData] = await Promise.all([
+      fetchCategories(),
+      fetchSites()
+    ])
+    
+    categories.value = organizeData(categoriesData, sitesData)
+  } catch (err) {
+    error.value = '加载数据失败，请稍后重试'
+    console.error('初始化数据失败:', err)
+    
+    // 如果API失败，使用备用数据
+    categories.value = getFallbackData()
+  } finally {
+    loading.value = false
+  }
+}
+
+// 备用数据（当API不可用时使用）
+const getFallbackData = () => {
+  return [
+    {
+      name: '我的服务',
+      icon: '💧',
+      sites: [
+        {
+          id: 1,
+          name: 'VitePress 博客',
+          description: '专业的 Vue 3 博客',
+          url: 'http://vitepress.guluwater.com/',
+          icon: '💧'
+        },
+        {
+          id: 2,
+          name: 'Office Tools',
+          description: '办公工具集',
+          url: 'http://officetools.guluwater.com/',
+          icon: '🛠️'
+        }
+      ]
+    }
+  ]
+}
 
 // 搜索过滤逻辑
 const filteredCategories = computed(() => {
@@ -338,6 +196,11 @@ const openSite = (url) => {
 const goToAdmin = () => {
   window.open('http://localhost:5173', '_blank')
 }
+
+// 组件挂载时初始化数据
+onMounted(() => {
+  initializeData()
+})
 </script>
 
 <style scoped>
@@ -744,5 +607,78 @@ const goToAdmin = () => {
   .nav-card:hover {
     transform: none;
   }
+}
+
+/* 加载状态样式 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: white;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+/* 错误状态样式 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: white;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.error-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+}
+
+.retry-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.retry-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
 }
 </style>

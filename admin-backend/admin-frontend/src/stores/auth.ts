@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import axios from 'axios'
 import { request } from '@/utils/request'
 import type { User, LoginForm, LoginResponse, ApiResponse } from '@/types'
 

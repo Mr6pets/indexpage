@@ -194,7 +194,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
-import axios from 'axios'
+import request from '@/utils/request'
 import LazyImage from '@/components/LazyImage.vue'
 
 // 响应式数据
@@ -248,12 +248,17 @@ const loadSites = async () => {
       category_id: selectedCategory.value
     }
     
-    const response = await axios.get('/sites', { params })
+    console.log('正在加载网站数据，参数:', params)
+    const response = await request.get('/sites', { params })
+    console.log('API响应:', response.data)
+    
     if (response.data.success) {
       sites.value = response.data.data.sites
       total.value = response.data.data.total
+      console.log('网站数据加载成功:', sites.value.length, '个网站')
     }
   } catch (error) {
+    console.error('加载网站列表失败:', error)
     ElMessage.error('加载网站列表失败')
   } finally {
     loading.value = false
@@ -262,7 +267,7 @@ const loadSites = async () => {
 
 const loadCategories = async () => {
   try {
-    const response = await axios.get('/categories/options')
+    const response = await request.get('/categories/options/list')
     if (response.data.success) {
       categories.value = response.data.data
     }
@@ -309,7 +314,7 @@ const submitForm = async () => {
     const url = isEdit.value ? `/sites/${form.id}` : '/sites'
     const method = isEdit.value ? 'put' : 'post'
     
-    const response = await axios[method](url, form)
+    const response = await request[method](url, form)
     
     if (response.data.success) {
       ElMessage.success(isEdit.value ? '更新成功' : '添加成功')
@@ -332,7 +337,7 @@ const submitForm = async () => {
 const toggleStatus = async (site: any) => {
   try {
     const newStatus = site.status === 'active' ? 'inactive' : 'active'
-    const response = await axios.put(`/sites/${site.id}`, {
+    const response = await request.put(`/sites/${site.id}`, {
       ...site,
       status: newStatus
     })
@@ -358,7 +363,7 @@ const deleteSite = async (site: any) => {
       }
     )
     
-    const response = await axios.delete(`/sites/${site.id}`)
+    const response = await request.delete(`/sites/${site.id}`)
     if (response.data.success) {
       ElMessage.success('删除成功')
       loadSites()

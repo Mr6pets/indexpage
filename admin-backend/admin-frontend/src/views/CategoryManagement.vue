@@ -202,7 +202,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { Plus, Search, Rank } from '@element-plus/icons-vue'
 import { VueDraggable } from 'vue-draggable-plus'
-import axios from 'axios'
+import request from '@/utils/request'
 
 // 响应式数据
 const loading = ref(false)
@@ -246,7 +246,7 @@ const loadCategories = async () => {
       search: searchQuery.value
     }
     
-    const response = await axios.get('/categories', { params })
+    const response = await request.get('/categories', { params })
     if (response.data.success) {
       categories.value = response.data.data.categories
       total.value = response.data.data.total
@@ -294,21 +294,15 @@ const submitForm = async () => {
     const url = isEdit.value ? `/categories/${form.id}` : '/categories'
     const method = isEdit.value ? 'put' : 'post'
     
-    const response = await axios[method](url, form)
+    const response = await request[method](url, form)
     
     if (response.data.success) {
       ElMessage.success(isEdit.value ? '更新成功' : '添加成功')
       dialogVisible.value = false
       loadCategories()
-    } else {
-      ElMessage.error(response.data.message || '操作失败')
     }
-  } catch (error: any) {
-    if (error.response?.data?.message) {
-      ElMessage.error(error.response.data.message)
-    } else {
-      ElMessage.error('操作失败')
-    }
+  } catch (error) {
+    ElMessage.error(isEdit.value ? '更新失败' : '添加失败')
   } finally {
     submitting.value = false
   }
@@ -317,7 +311,7 @@ const submitForm = async () => {
 const toggleStatus = async (category: any) => {
   try {
     const newStatus = category.status === 'active' ? 'inactive' : 'active'
-    const response = await axios.put(`/categories/${category.id}`, {
+    const response = await request.put(`/categories/${category.id}`, {
       ...category,
       status: newStatus
     })
@@ -339,21 +333,17 @@ const deleteCategory = async (category: any) => {
   
   try {
     await ElMessageBox.confirm(
-      `确定要删除分类 "${category.name}" 吗？`,
+      `确定要删除分类"${category.name}"吗？`,
       '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
+      { type: 'warning' }
     )
     
-    const response = await axios.delete(`/categories/${category.id}`)
+    const response = await request.delete(`/categories/${category.id}`)
     if (response.data.success) {
       ElMessage.success('删除成功')
       loadCategories()
     }
-  } catch (error: any) {
+  } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
     }
@@ -362,7 +352,7 @@ const deleteCategory = async (category: any) => {
 
 const showSortDialog = async () => {
   try {
-    const response = await axios.get('/categories/options')
+    const response = await request.get('/categories/options/list')
     if (response.data.success) {
       sortList.value = [...response.data.data].sort((a, b) => b.sort_order - a.sort_order)
       sortDialogVisible.value = true
@@ -380,7 +370,7 @@ const saveSortOrder = async () => {
       sort_order: sortList.value.length - index
     }))
     
-    const response = await axios.put('/categories/sort', { categories: sortData })
+    const response = await request.put('/categories/sort', { categories: sortData })
     if (response.data.success) {
       ElMessage.success('排序保存成功')
       sortDialogVisible.value = false

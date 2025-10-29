@@ -116,17 +116,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { 
-  Link, 
-  Collection, 
-  User, 
+import {
+  Link,
+  Collection,
+  User,
   DataAnalysis,
-  ArrowUp,
-  ArrowDown,
-  TrendCharts,
-  PieChart,
   Refresh,
   Plus,
   Edit,
@@ -136,6 +132,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { formatNumber, getRelativeTime } from '@/utils'
+import request from '@/utils/request'
 
 // 响应式数据
 const loading = ref(true)
@@ -146,29 +143,29 @@ const selectedPeriod = ref('7天')
 const statsData = ref([
   {
     title: '网站总数',
-    value: 1234,
-    change: 12.5,
+    value: 0,
+    change: 0,
     color: '#1890ff',
     icon: Link
   },
   {
     title: '分类数量',
-    value: 56,
-    change: 8.2,
+    value: 0,
+    change: 0,
     color: '#52c41a',
     icon: Collection
   },
   {
     title: '用户数量',
-    value: 789,
-    change: -2.1,
+    value: 0,
+    change: 0,
     color: '#faad14',
     icon: User
   },
   {
     title: '总访问量',
-    value: 98765,
-    change: 15.8,
+    value: 0,
+    change: 0,
     color: '#f5222d',
     icon: DataAnalysis
   }
@@ -258,18 +255,31 @@ const loadDashboardData = async () => {
     loading.value = true
     error.value = ''
     
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // 获取统计数据
+    const response = await request.get('/stats/overview')
     
-    // 这里应该调用实际的API
-    // const response = await request.get('/api/dashboard/stats')
-    // statsData.value = response.data
+    if (response.data.success) {
+      const data = response.data.data
+      
+      // 更新统计数据
+      statsData.value[0].value = data.total_sites || 0
+      statsData.value[1].value = data.total_categories || 0
+      statsData.value[2].value = data.total_users || 0
+      statsData.value[3].value = data.total_clicks || 0
+      
+      // 可以根据需要计算变化百分比
+      // 这里暂时设为0，后续可以添加历史数据对比
+      statsData.value.forEach(stat => {
+        stat.change = 0
+      })
+    }
     
     loading.value = false
   } catch (err) {
     loading.value = false
     error.value = err instanceof Error ? err.message : '加载数据失败'
     ElMessage.error('仪表板数据加载失败')
+    console.error('Dashboard data loading error:', err)
   }
 }
 

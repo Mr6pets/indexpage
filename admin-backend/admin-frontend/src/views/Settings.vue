@@ -379,7 +379,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type UploadProps } from 'element-plus'
 import { Plus, Download, Delete, Upload } from '@element-plus/icons-vue'
-import axios from 'axios'
+import request from '@/utils/request'
 
 // 响应式数据
 const activeTab = ref('basic')
@@ -438,91 +438,120 @@ const backupList = ref([])
 
 // 方法
 const loadSettings = async () => {
+  loading.value = true
   try {
-    const response = await axios.get('/settings')
+    const response = await request.get('/settings')
     if (response.data.success) {
       const settings = response.data.data
       
-      // 分组设置数据
-      settings.forEach((setting: any) => {
-        const { key, value } = setting
-        
-        if (key in basicSettings) {
-          (basicSettings as any)[key] = value
-        } else if (key in displaySettings) {
-          (displaySettings as any)[key] = value
-        } else if (key in securitySettings) {
-          (securitySettings as any)[key] = value
-        } else if (key in emailSettings) {
-          (emailSettings as any)[key] = value
-        }
+      // 基础设置
+      Object.assign(basicForm, {
+        site_name: settings.site_name || '',
+        site_description: settings.site_description || '',
+        site_keywords: settings.site_keywords || '',
+        site_logo: settings.site_logo || '',
+        site_favicon: settings.site_favicon || ''
+      })
+      
+      // 显示设置
+      Object.assign(displayForm, {
+        theme: settings.theme || 'light',
+        layout: settings.layout || 'grid',
+        items_per_page: settings.items_per_page || 20,
+        show_category_icons: settings.show_category_icons || true,
+        show_site_descriptions: settings.show_site_descriptions || true
+      })
+      
+      // 安全设置
+      Object.assign(securityForm, {
+        enable_registration: settings.enable_registration || false,
+        require_email_verification: settings.require_email_verification || false,
+        password_min_length: settings.password_min_length || 6,
+        session_timeout: settings.session_timeout || 24
+      })
+      
+      // 邮件设置
+      Object.assign(emailForm, {
+        smtp_host: settings.smtp_host || '',
+        smtp_port: settings.smtp_port || 587,
+        smtp_user: settings.smtp_user || '',
+        smtp_password: settings.smtp_password || '',
+        smtp_secure: settings.smtp_secure || false,
+        from_email: settings.from_email || '',
+        from_name: settings.from_name || ''
       })
     }
   } catch (error) {
     ElMessage.error('加载设置失败')
+  } finally {
+    loading.value = false
   }
 }
 
 const saveBasicSettings = async () => {
-  basicSaving.value = true
+  if (!basicFormRef.value) return
+  
   try {
-    const response = await axios.put('/settings/batch', basicSettings)
+    await basicFormRef.value.validate()
+    basicSubmitting.value = true
+    
+    const response = await request.put('/settings/batch', basicForm)
     if (response.data.success) {
-      ElMessage.success('基本设置保存成功')
+      ElMessage.success('基础设置保存成功')
     }
   } catch (error) {
-    ElMessage.error('保存失败')
+    ElMessage.error('保存基础设置失败')
   } finally {
-    basicSaving.value = false
+    basicSubmitting.value = false
   }
 }
 
 const saveDisplaySettings = async () => {
-  displaySaving.value = true
   try {
-    const response = await axios.put('/settings/batch', displaySettings)
+    displaySubmitting.value = true
+    const response = await request.put('/settings/batch', displayForm)
     if (response.data.success) {
       ElMessage.success('显示设置保存成功')
     }
   } catch (error) {
-    ElMessage.error('保存失败')
+    ElMessage.error('保存显示设置失败')
   } finally {
-    displaySaving.value = false
+    displaySubmitting.value = false
   }
 }
 
 const saveSecuritySettings = async () => {
-  securitySaving.value = true
   try {
-    const response = await axios.put('/settings/batch', securitySettings)
+    securitySubmitting.value = true
+    const response = await request.put('/settings/batch', securityForm)
     if (response.data.success) {
       ElMessage.success('安全设置保存成功')
     }
   } catch (error) {
-    ElMessage.error('保存失败')
+    ElMessage.error('保存安全设置失败')
   } finally {
-    securitySaving.value = false
+    securitySubmitting.value = false
   }
 }
 
 const saveEmailSettings = async () => {
-  emailSaving.value = true
   try {
-    const response = await axios.put('/settings/batch', emailSettings)
+    emailSubmitting.value = true
+    const response = await request.put('/settings/batch', emailForm)
     if (response.data.success) {
       ElMessage.success('邮件设置保存成功')
     }
   } catch (error) {
-    ElMessage.error('保存失败')
+    ElMessage.error('保存邮件设置失败')
   } finally {
-    emailSaving.value = false
+    emailSubmitting.value = false
   }
 }
 
-const testEmail = async () => {
-  emailTesting.value = true
+const testEmailSettings = async () => {
   try {
-    const response = await axios.post('/settings/test-email')
+    emailTesting.value = true
+    const response = await request.post('/settings/test-email')
     if (response.data.success) {
       ElMessage.success('测试邮件发送成功')
     }
@@ -553,58 +582,53 @@ const uploadLogo = async (options: any) => {
   formData.append('file', options.file)
   
   try {
-    const response = await axios.post('/upload/logo', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+    logoUploading.value = true
+    const response = await request.post('/upload/logo', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     })
     
     if (response.data.success) {
-      basicSettings.site_logo = response.data.data.url
+      basicForm.site_logo = response.data.data.url
       ElMessage.success('Logo上传成功')
     }
   } catch (error) {
     ElMessage.error('Logo上传失败')
+  } finally {
+    logoUploading.value = false
   }
 }
 
-const beforeFaviconUpload: UploadProps['beforeUpload'] = (file) => {
-  const isIcon = file.type === 'image/x-icon' || file.type === 'image/png'
-  const isLt1M = file.size / 1024 / 1024 < 1
-
-  if (!isIcon) {
-    ElMessage.error('图标只能是 ICO/PNG 格式!')
-    return false
-  }
-  if (!isLt1M) {
-    ElMessage.error('图标大小不能超过 1MB!')
-    return false
-  }
-  return true
-}
-
-const uploadFavicon = async (options: any) => {
+const handleFaviconUpload: UploadProps['customRequest'] = async (options) => {
   const formData = new FormData()
-  formData.append('file', options.file)
+  formData.append('favicon', options.file)
   
   try {
-    const response = await axios.post('/upload/favicon', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+    faviconUploading.value = true
+    const response = await request.post('/upload/favicon', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     })
     
     if (response.data.success) {
-      basicSettings.site_favicon = response.data.data.url
-      ElMessage.success('图标上传成功')
+      basicForm.site_favicon = response.data.data.url
+      ElMessage.success('Favicon上传成功')
     }
   } catch (error) {
-    ElMessage.error('图标上传失败')
+    ElMessage.error('Favicon上传失败')
+  } finally {
+    faviconUploading.value = false
   }
 }
 
-const loadBackupList = async () => {
-  backupLoading.value = true
+const loadBackups = async () => {
   try {
-    const response = await axios.get('/settings/backups')
+    backupLoading.value = true
+    const response = await request.get('/settings/backups')
     if (response.data.success) {
-      backupList.value = response.data.data
+      backups.value = response.data.data
     }
   } catch (error) {
     ElMessage.error('加载备份列表失败')
@@ -614,86 +638,62 @@ const loadBackupList = async () => {
 }
 
 const createBackup = async () => {
-  backupCreating.value = true
   try {
-    const response = await axios.post('/settings/backup')
+    backupCreating.value = true
+    const response = await request.post('/settings/backup')
     if (response.data.success) {
       ElMessage.success('备份创建成功')
-      loadBackupList()
+      loadBackups()
     }
   } catch (error) {
-    ElMessage.error('备份创建失败')
+    ElMessage.error('创建备份失败')
   } finally {
     backupCreating.value = false
   }
 }
 
-const downloadBackup = (backup: any) => {
-  const link = document.createElement('a')
-  link.href = `/api/settings/backup/${backup.id}/download`
-  link.download = backup.filename
-  link.click()
-}
-
 const deleteBackup = async (backup: any) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除备份文件 "${backup.filename}" 吗？`,
+      `确定要删除备份 "${backup.name}" 吗？`,
       '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
+      { type: 'warning' }
     )
     
-    const response = await axios.delete(`/settings/backup/${backup.id}`)
+    const response = await request.delete(`/settings/backup/${backup.id}`)
     if (response.data.success) {
       ElMessage.success('删除成功')
-      loadBackupList()
+      loadBackups()
     }
-  } catch (error: any) {
+  } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
     }
   }
 }
 
-const beforeRestore = (file: File) => {
-  const isValidFile = file.name.endsWith('.sql') || file.name.endsWith('.zip')
-  if (!isValidFile) {
-    ElMessage.error('只支持 .sql 或 .zip 格式的备份文件!')
-    return false
-  }
-  return true
-}
-
-const restoreBackup = async (options: any) => {
+const handleRestoreUpload: UploadProps['customRequest'] = async (options) => {
+  const formData = new FormData()
+  formData.append('backup', options.file)
+  
   try {
-    await ElMessageBox.confirm(
-      '恢复数据将覆盖当前所有数据，确定要继续吗？',
-      '确认恢复',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
+    restoreUploading.value = true
+    const response = await request.post('/settings/restore', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
       }
-    )
-    
-    const formData = new FormData()
-    formData.append('file', options.file)
-    
-    const response = await axios.post('/settings/restore', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
     })
     
     if (response.data.success) {
-      ElMessage.success('数据恢复成功')
+      ElMessage.success('数据恢复成功，请刷新页面')
+      setTimeout(() => {
+        window.location.reload()
+      }, 2000)
     }
-  } catch (error: any) {
-    if (error !== 'cancel') {
-      ElMessage.error('数据恢复失败')
-    }
+  } catch (error) {
+    ElMessage.error('数据恢复失败')
+  } finally {
+    restoreUploading.value = false
   }
 }
 

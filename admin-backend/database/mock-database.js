@@ -23,14 +23,16 @@ async function initMockDatabase() {
   try {
     console.log('🔄 初始化模拟数据库...');
     
-    // 清空现有数据
-    database = {
-      users: [],
-      categories: [],
-      sites: [],
-      settings: [],
-      statistics: []
-    };
+    // 如果数据库已经有数据，不重复初始化
+    if (database.categories.length > 0) {
+      console.log('✅ 模拟数据库已初始化，跳过重复初始化');
+      console.log(`📊 数据统计:`);
+      console.log(`   - 用户: ${database.users.length} 条`);
+      console.log(`   - 分类: ${database.categories.length} 条`);
+      console.log(`   - 网站: ${database.sites.length} 条`);
+      console.log(`   - 设置: ${database.settings.length} 条`);
+      return true;
+    }
     
     // 重置计数器
     counters = {
@@ -57,10 +59,12 @@ async function initMockDatabase() {
     
     // 创建默认分类
     const defaultCategories = [
-      { name: '常用工具', description: '日常工作中常用的在线工具', icon: 'Setting', sort_order: 1 },
-      { name: '开发资源', description: '编程开发相关的资源和工具', icon: 'Document', sort_order: 2 },
-      { name: '学习教育', description: '在线学习和教育平台', icon: 'User', sort_order: 3 },
-      { name: '娱乐休闲', description: '娱乐和休闲相关的网站', icon: 'DataAnalysis', sort_order: 4 }
+      { name: '我的服务', icon: '🏠', description: '个人和团队服务', sort_order: 1 },
+      { name: '前端框架', icon: '⚛️', description: '前端开发框架和库', sort_order: 2 },
+      { name: '开发工具', icon: '🛠️', description: '开发和调试工具', sort_order: 3 },
+      { name: '学习资源', icon: '📚', description: '编程学习和教程资源', sort_order: 4 },
+      { name: '技术社区', icon: '👥', description: '技术交流和问答社区', sort_order: 5 },
+      { name: '实用工具', icon: '🔧', description: '日常开发实用工具', sort_order: 6 }
     ];
     
     defaultCategories.forEach(category => {
@@ -73,21 +77,56 @@ async function initMockDatabase() {
       });
     });
     
-    // 创建默认网站
+    // 创建默认网站数据
     const defaultSites = [
-      { name: '百度', description: '全球最大的中文搜索引擎', url: 'https://www.baidu.com', category_id: 1, sort_order: 1 },
-      { name: 'Google', description: '全球最大的搜索引擎', url: 'https://www.google.com', category_id: 1, sort_order: 2 },
-      { name: 'GitHub', description: '全球最大的代码托管平台', url: 'https://github.com', category_id: 2, sort_order: 1 },
-      { name: 'Stack Overflow', description: '程序员问答社区', url: 'https://stackoverflow.com', category_id: 2, sort_order: 2 }
+      // 我的服务 (category_id: 1) - 用户的个人服务
+      { name: 'VitePress 博客', description: '专业的 Vue 3 博客', url: 'http://vitepress.guluwater.com/', icon: '💧', category_id: 1, sort_order: 1 },
+      { name: 'Office Tools', description: '办公工具集', url: 'http://officetools.guluwater.com/', icon: '🛠️', category_id: 1, sort_order: 2 },
+      { name: 'General Methods Utils', description: '通用方法工具集', url: 'http://generalmethodsutils.guluwater.com/', icon: '🧰', category_id: 1, sort_order: 3 },
+      { name: 'Online Interface Lite', description: '在线接口（轻量版）', url: 'http://onlineinterfacelite.guluwater.com/', icon: '🔌', category_id: 1, sort_order: 4 },
+      { name: 'Online Interface Full', description: '在线接口（完整版）', url: 'http://onlineinterfacefull.guluwater.com/', icon: '🧩', category_id: 1, sort_order: 5 },
+      { name: 'Lite Image Previewer', description: '轻量图像预览器', url: 'http://liteimagepreviewer.guluwater.com/', icon: '🖼️', category_id: 1, sort_order: 6 },
+      { name: 'Papercraft', description: '纸艺工具', url: 'http://papercraft.guluwater.com/', icon: '✂️', category_id: 1, sort_order: 7 },
+      { name: 'Mock Data Generator', description: '智能数据模拟生成器', url: 'http://mockdatagenerator.guluwater.com/', icon: '🔄', category_id: 1, sort_order: 8 },
+      
+      // 前端框架 (category_id: 2)
+      { name: 'Vue.js', description: '渐进式 JavaScript 框架', url: 'https://vuejs.org/', icon: '💚', category_id: 2, sort_order: 1 },
+      { name: 'React', description: 'Facebook 开发的 UI 库', url: 'https://reactjs.org/', icon: '⚛️', category_id: 2, sort_order: 2 },
+      { name: 'Angular', description: 'Google 开发的前端框架', url: 'https://angular.io/', icon: '🅰️', category_id: 2, sort_order: 3 },
+      { name: 'Svelte', description: '编译时优化的前端框架', url: 'https://svelte.dev/', icon: '🔥', category_id: 2, sort_order: 4 },
+      
+      // 开发工具 (category_id: 3)
+      { name: 'VS Code', description: '微软开发的代码编辑器', url: 'https://code.visualstudio.com/', icon: '💙', category_id: 3, sort_order: 1 },
+      { name: 'WebStorm', description: 'JetBrains 的 Web IDE', url: 'https://www.jetbrains.com/webstorm/', icon: '🌊', category_id: 3, sort_order: 2 },
+      { name: 'Chrome DevTools', description: '浏览器开发者工具', url: 'https://developer.chrome.com/docs/devtools/', icon: '🔍', category_id: 3, sort_order: 3 },
+      { name: 'Figma', description: '协作式设计工具', url: 'https://figma.com/', icon: '🎨', category_id: 3, sort_order: 4 },
+      
+      // 学习资源 (category_id: 4)
+      { name: 'MDN Web Docs', description: 'Web 技术权威文档', url: 'https://developer.mozilla.org/', icon: '📖', category_id: 4, sort_order: 1 },
+      { name: 'freeCodeCamp', description: '免费编程学习平台', url: 'https://www.freecodecamp.org/', icon: '🔥', category_id: 4, sort_order: 2 },
+      { name: 'Codecademy', description: '交互式编程学习', url: 'https://www.codecademy.com/', icon: '🎓', category_id: 4, sort_order: 3 },
+      { name: 'JavaScript.info', description: 'JavaScript 深度教程', url: 'https://javascript.info/', icon: '📚', category_id: 4, sort_order: 4 },
+      
+      // 技术社区 (category_id: 5)
+      { name: 'Stack Overflow', description: '程序员问答社区', url: 'https://stackoverflow.com/', icon: '📚', category_id: 5, sort_order: 1 },
+      { name: 'GitHub Discussions', description: 'GitHub 社区讨论', url: 'https://github.com/discussions', icon: '💬', category_id: 5, sort_order: 2 },
+      { name: 'Dev.to', description: '开发者社区平台', url: 'https://dev.to/', icon: '👩‍💻', category_id: 5, sort_order: 3 },
+      { name: 'Reddit Programming', description: 'Reddit 编程社区', url: 'https://www.reddit.com/r/programming/', icon: '🤖', category_id: 5, sort_order: 4 },
+      
+      // 实用工具 (category_id: 6)
+      { name: 'Can I Use', description: '浏览器兼容性查询', url: 'https://caniuse.com/', icon: '✅', category_id: 6, sort_order: 1 },
+      { name: 'RegExr', description: '正则表达式测试工具', url: 'https://regexr.com/', icon: '🔤', category_id: 6, sort_order: 2 },
+      { name: 'JSON Formatter', description: 'JSON 格式化工具', url: 'https://jsonformatter.curiousconcept.com/', icon: '📋', category_id: 6, sort_order: 3 },
+      { name: 'Color Hunt', description: '配色方案灵感', url: 'https://colorhunt.co/', icon: '🎨', category_id: 6, sort_order: 4 },
+      { name: 'Postman', description: 'API 开发测试工具', url: 'https://www.postman.com/', icon: '📮', category_id: 6, sort_order: 5 }
     ];
     
     defaultSites.forEach(site => {
       database.sites.push({
         id: counters.sites++,
         ...site,
-        icon: null,
-        click_count: 0,
         status: 'active',
+        click_count: Math.floor(Math.random() * 1000),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
@@ -138,6 +177,31 @@ const mockDB = {
   // 执行方法
   async execute(sql, params = []) {
     console.log('模拟执行:', sql, params);
+    
+    // 模拟不同类型的SQL查询
+    if (sql.includes('SELECT COUNT')) {
+      // 模拟COUNT查询
+      if (sql.includes('categories')) {
+        return [[{ total: database.categories.length }], []];
+      } else if (sql.includes('sites')) {
+        return [[{ total: database.sites.length }], []];
+      } else if (sql.includes('users')) {
+        return [[{ total: database.users.length }], []];
+      }
+      return [[{ total: 0 }], []];
+    } else if (sql.includes('SELECT') && sql.includes('categories')) {
+      // 模拟分类查询
+      const categories = database.categories.map(cat => ({
+        ...cat,
+        site_count: database.sites.filter(site => site.category_id === cat.id).length
+      }));
+      return [categories, []];
+    } else if (sql.includes('SELECT') && sql.includes('sites')) {
+      // 模拟网站查询
+      return [database.sites, []];
+    }
+    
+    // 默认返回格式
     return [{ affectedRows: 1, insertId: 1 }, []];
   },
   

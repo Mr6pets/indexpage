@@ -237,7 +237,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
-import axios from 'axios'
+import request from '@/utils/request'
 
 // 响应式数据
 const loading = ref(false)
@@ -321,7 +321,7 @@ const loadUsers = async () => {
       role: selectedRole.value
     }
     
-    const response = await axios.get('/users', { params })
+    const response = await request.get('/users', { params })
     if (response.data.success) {
       users.value = response.data.data.users
       total.value = response.data.data.total
@@ -395,7 +395,7 @@ const submitForm = async () => {
 const toggleStatus = async (user: any) => {
   try {
     const newStatus = user.status === 'active' ? 'inactive' : 'active'
-    const response = await axios.put(`/users/${user.id}`, {
+    const response = await request.put(`/users/${user.id}`, {
       ...user,
       status: newStatus
     })
@@ -423,7 +423,7 @@ const submitPasswordReset = async () => {
     await passwordFormRef.value.validate()
     passwordSubmitting.value = true
     
-    const response = await axios.put(`/users/${passwordForm.userId}/password`, {
+    const response = await request.put(`/users/${passwordForm.userId}/password`, {
       password: passwordForm.password
     })
     
@@ -461,7 +461,7 @@ const deleteUser = async (user: any) => {
       }
     )
     
-    const response = await axios.delete(`/users/${user.id}`)
+    const response = await request.delete(`/users/${user.id}`)
     if (response.data.success) {
       ElMessage.success('删除成功')
       loadUsers()

@@ -1,10 +1,12 @@
 const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
 
-// 尝试使用MySQL，如果失败则使用模拟数据库
+// 使用MySQL数据库
 let database;
 try {
+  console.log('🔄 Stats路由: 尝试连接MySQL数据库');
   database = require('../config/database');
+  console.log('✅ Stats路由: MySQL数据库连接成功');
 } catch (error) {
   console.log('⚠️ Stats路由: MySQL连接失败，使用模拟数据库');
   database = require('../database/mock-database');
@@ -66,11 +68,11 @@ router.get('/overview', authenticateToken, async (req, res) => {
     } else {
       // 使用MySQL数据库
       [totalSites] = await pool.execute(
-        'SELECT COUNT(*) as total FROM sites WHERE is_active = 1'
+        'SELECT COUNT(*) as total FROM sites WHERE status = "active"'
       );
 
       [totalCategories] = await pool.execute(
-        'SELECT COUNT(*) as total FROM categories WHERE is_active = 1'
+        'SELECT COUNT(*) as total FROM categories WHERE status = "active"'
       );
 
       [totalUsers] = await pool.execute(
@@ -93,7 +95,7 @@ router.get('/overview', authenticateToken, async (req, res) => {
         `SELECT s.id, s.name, s.url, s.click_count, c.name as category_name
          FROM sites s
          LEFT JOIN categories c ON s.category_id = c.id
-         WHERE s.is_active = 1
+         WHERE s.status = "active"
          ORDER BY s.click_count DESC
          LIMIT 10`
       );
@@ -171,7 +173,7 @@ router.get('/trends', authenticateToken, async (req, res) => {
        FROM categories c
        LEFT JOIN sites s ON c.id = s.category_id
        LEFT JOIN access_logs al ON s.id = al.site_id AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-       WHERE c.is_active = 1
+       WHERE c.status = "active"
        GROUP BY c.id, c.name, c.icon
        ORDER BY visits DESC`,
       [parseInt(days)]
@@ -211,7 +213,7 @@ router.get('/rankings', authenticateToken, async (req, res) => {
           c.name as category_name, c.icon as category_icon
         FROM sites s
         LEFT JOIN categories c ON s.category_id = c.id
-        WHERE s.is_active = 1
+        WHERE s.status = "active"
         ORDER BY s.click_count DESC
         LIMIT ?
       `;
@@ -225,7 +227,7 @@ router.get('/rankings', authenticateToken, async (req, res) => {
         FROM sites s
         LEFT JOIN categories c ON s.category_id = c.id
         LEFT JOIN access_logs al ON s.id = al.site_id AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-        WHERE s.is_active = 1
+        WHERE s.status = "active"
         GROUP BY s.id
         ORDER BY recent_visits DESC
         LIMIT ?
@@ -404,10 +406,10 @@ router.get('/export', authenticateToken, async (req, res) => {
       case 'overview':
         // 导出总体统计
         const [sites] = await pool.execute(
-          'SELECT COUNT(*) as total FROM sites WHERE is_active = 1'
+          'SELECT COUNT(*) as total FROM sites WHERE status = "active"'
         );
         const [categories] = await pool.execute(
-          'SELECT COUNT(*) as total FROM categories WHERE is_active = 1'
+          'SELECT COUNT(*) as total FROM categories WHERE status = "active"'
         );
         const [visits] = await pool.execute(
           'SELECT COUNT(*) as total FROM access_logs'
@@ -440,7 +442,7 @@ router.get('/export', authenticateToken, async (req, res) => {
           `SELECT s.*, c.name as category_name
            FROM sites s
            LEFT JOIN categories c ON s.category_id = c.id
-           WHERE s.is_active = 1
+           WHERE s.status = "active"
            ORDER BY s.click_count DESC`
         );
         data = siteData;

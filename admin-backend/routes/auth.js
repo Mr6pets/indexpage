@@ -3,10 +3,12 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { authenticateToken } = require('../middleware/auth');
 
-// 尝试使用MySQL，如果失败则使用模拟数据库
+// 使用MySQL数据库
 let database;
 try {
+  console.log('🔄 Auth路由: 尝试连接MySQL数据库');
   database = require('../config/database');
+  console.log('✅ Auth路由: MySQL数据库连接成功');
 } catch (error) {
   console.log('⚠️ Auth路由: MySQL连接失败，使用模拟数据库');
   database = require('../database/mock-database');

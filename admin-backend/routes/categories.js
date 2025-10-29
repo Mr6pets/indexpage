@@ -1,10 +1,12 @@
 const express = require('express');
 const { authenticateToken, requireEditor } = require('../middleware/auth');
 
-// 尝试使用MySQL，如果失败则使用模拟数据库
+// 使用MySQL数据库
 let database;
 try {
+  console.log('🔄 Categories路由: 尝试连接MySQL数据库');
   database = require('../config/database');
+  console.log('✅ Categories路由: MySQL数据库连接成功');
 } catch (error) {
   console.log('⚠️ Categories路由: MySQL连接失败，使用模拟数据库');
   database = require('../database/mock-database');
@@ -19,8 +21,8 @@ router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 10, search = '', active } = req.query;
     
-    let categories;
-    let total;
+    let categories = [];
+    let total = 0;
     
     if (categoryOperations && !pool) {
       // 使用模拟数据库
@@ -36,8 +38,8 @@ router.get('/', async (req, res) => {
       
       // 状态过滤
       if (active !== undefined) {
-        const isActive = active === 'true';
-        allCategories = allCategories.filter(cat => cat.is_active === isActive);
+        const status = active === 'true' ? 'active' : 'inactive';
+        allCategories = allCategories.filter(cat => cat.status === status);
       }
       
       total = allCategories.length;
@@ -98,8 +100,8 @@ router.get('/', async (req, res) => {
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
-          total: total,
-          pages: Math.ceil(total / limit)
+          total: total || 0,
+          pages: Math.ceil((total || 0) / limit)
         }
       }
     });
@@ -124,7 +126,7 @@ router.get('/:id', async (req, res) => {
       `SELECT c.*, 
               COUNT(s.id) as site_count
        FROM categories c
-       LEFT JOIN sites s ON c.id = s.category_id AND s.is_active = 1
+       LEFT JOIN sites s ON c.id = s.category_id AND s.status = 'active'
        WHERE c.id = ?
        GROUP BY c.id`,
       [id]
@@ -154,7 +156,7 @@ router.get('/:id', async (req, res) => {
 // 创建分类
 router.post('/', authenticateToken, requireEditor, async (req, res) => {
   try {
-    const { name, icon, description, sort_order = 0, is_active = true } = req.body;
+    const { name, icon, description, sort_order = 0, status = 'active' } = req.body;
 
     if (!name) {
       return res.status(400).json({
@@ -177,8 +179,8 @@ router.post('/', authenticateToken, requireEditor, async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      'INSERT INTO categories (name, icon, description, sort_order, is_active) VALUES (?, ?, ?, ?, ?)',
-      [name, icon, description, sort_order, is_active]
+      'INSERT INTO categories (name, icon, description, sort_order, status) VALUES (?, ?, ?, ?, ?)',
+      [name, icon, description, sort_order, status]
     );
 
     res.status(201).json({
@@ -190,7 +192,7 @@ router.post('/', authenticateToken, requireEditor, async (req, res) => {
         icon,
         description,
         sort_order,
-        is_active
+        status
       }
     });
 
@@ -207,7 +209,7 @@ router.post('/', authenticateToken, requireEditor, async (req, res) => {
 router.put('/:id', authenticateToken, requireEditor, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, icon, description, sort_order, is_active } = req.body;
+    const { name, icon, description, sort_order, status } = req.body;
 
     if (!name) {
       return res.status(400).json({
@@ -243,8 +245,8 @@ router.put('/:id', authenticateToken, requireEditor, async (req, res) => {
     }
 
     await pool.execute(
-      'UPDATE categories SET name = ?, icon = ?, description = ?, sort_order = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [name, icon, description, sort_order, is_active, id]
+      'UPDATE categories SET name = ?, icon = ?, description = ?, sort_order = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [name, icon, description, sort_order, status, id]
     );
 
     res.json({
@@ -358,7 +360,7 @@ router.put('/batch/sort', authenticateToken, requireEditor, async (req, res) => 
 router.get('/options/list', async (req, res) => {
   try {
     const [categories] = await pool.execute(
-      'SELECT id, name, icon FROM categories WHERE is_active = 1 ORDER BY sort_order ASC, name ASC'
+      'SELECT id, name, icon FROM categories WHERE status = "active" ORDER BY sort_order ASC, name ASC'
     );
 
     res.json({

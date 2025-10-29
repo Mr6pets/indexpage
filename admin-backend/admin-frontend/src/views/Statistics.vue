@@ -253,7 +253,7 @@ import {
   GridComponent
 } from 'echarts/components'
 import VChart from 'vue-echarts'
-import axios from 'axios'
+import request from '@/utils/request'
 import VirtualScroll from '@/components/VirtualScroll.vue'
 
 // 注册 ECharts 组件
@@ -357,7 +357,7 @@ let realtimeTimer: NodeJS.Timeout | null = null
 // 方法
 const loadOverviewStats = async () => {
   try {
-    const response = await axios.get('/stats/overview')
+    const response = await request.get('/stats/overview')
     if (response.data.success) {
       Object.assign(overviewStats, response.data.data)
     }
@@ -369,7 +369,7 @@ const loadOverviewStats = async () => {
 const loadTrendData = async () => {
   trendLoading.value = true
   try {
-    const response = await axios.get('/stats/trends', {
+    const response = await request.get('/stats/trends', {
       params: { days: trendPeriod.value }
     })
     
@@ -388,7 +388,7 @@ const loadTrendData = async () => {
 const loadCategoryData = async () => {
   categoryLoading.value = true
   try {
-    const response = await axios.get('/stats/categories')
+    const response = await request.get('/stats/categories')
     if (response.data.success) {
       categoryChartOption.value.series[0].data = response.data.data
     }
@@ -402,7 +402,7 @@ const loadCategoryData = async () => {
 const loadRankingData = async () => {
   rankingLoading.value = true
   try {
-    const response = await axios.get('/stats/ranking', {
+    const response = await request.get('/stats/ranking', {
       params: { type: rankingType.value, limit: 10 }
     })
     
@@ -419,7 +419,7 @@ const loadRankingData = async () => {
 const loadBehaviorData = async () => {
   behaviorLoading.value = true
   try {
-    const response = await axios.get('/stats/behavior')
+    const response = await request.get('/stats/behavior')
     if (response.data.success) {
       const data = response.data.data
       Object.assign(behaviorStats, {
@@ -440,7 +440,7 @@ const loadBehaviorData = async () => {
 const loadRealtimeData = async () => {
   realtimeLoading.value = true
   try {
-    const response = await axios.get('/stats/realtime')
+    const response = await request.get('/stats/realtime')
     if (response.data.success) {
       Object.assign(realtimeStats, response.data.data)
     }

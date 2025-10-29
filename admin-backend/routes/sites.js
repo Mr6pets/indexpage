@@ -1,10 +1,12 @@
 const express = require('express');
 const { authenticateToken, requireEditor } = require('../middleware/auth');
 
-// 尝试使用MySQL，如果失败则使用模拟数据库
+// 使用MySQL数据库
 let database;
 try {
+  console.log('🔄 Sites路由: 尝试连接MySQL数据库');
   database = require('../config/database');
+  console.log('✅ Sites路由: MySQL数据库连接成功');
 } catch (error) {
   console.log('⚠️ Sites路由: MySQL连接失败，使用模拟数据库');
   database = require('../database/mock-database');
@@ -43,8 +45,8 @@ router.get('/', async (req, res) => {
       
       // 状态过滤
       if (active !== undefined) {
-        const isActive = active === 'true';
-        allSites = allSites.filter(site => site.is_active === isActive);
+        const status = active === 'true' ? 'active' : 'inactive';
+        allSites = allSites.filter(site => site.status === status);
       }
       
       total = allSites.length;
@@ -78,8 +80,8 @@ router.get('/', async (req, res) => {
       }
 
       if (active !== undefined) {
-        whereClause += ' AND s.is_active = ?';
-        params.push(active === 'true');
+        whereClause += ' AND s.status = ?';
+        params.push(active === 'true' ? 'active' : 'inactive');
       }
 
       // 获取网站列表
@@ -161,7 +163,7 @@ router.get('/:id', async (req, res) => {
 // 创建网站
 router.post('/', authenticateToken, requireEditor, async (req, res) => {
   try {
-    const { name, url, description, icon, category_id, sort_order = 0, is_active = true } = req.body;
+    const { name, url, description, icon, category_id, sort_order = 0, status = 'active' } = req.body;
 
     if (!name || !url) {
       return res.status(400).json({
@@ -196,8 +198,8 @@ router.post('/', authenticateToken, requireEditor, async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      'INSERT INTO sites (name, url, description, icon, category_id, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [name, url, description, icon, category_id, sort_order, is_active]
+      'INSERT INTO sites (name, url, description, icon, category_id, sort_order, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, url, description, icon, category_id, sort_order, status]
     );
 
     res.status(201).json({
@@ -211,7 +213,7 @@ router.post('/', authenticateToken, requireEditor, async (req, res) => {
         icon,
         category_id,
         sort_order,
-        is_active
+        status
       }
     });
 
@@ -228,7 +230,7 @@ router.post('/', authenticateToken, requireEditor, async (req, res) => {
 router.put('/:id', authenticateToken, requireEditor, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, url, description, icon, category_id, sort_order, is_active } = req.body;
+    const { name, url, description, icon, category_id, sort_order, status } = req.body;
 
     if (!name || !url) {
       return res.status(400).json({
@@ -276,8 +278,8 @@ router.put('/:id', authenticateToken, requireEditor, async (req, res) => {
     }
 
     await pool.execute(
-      'UPDATE sites SET name = ?, url = ?, description = ?, icon = ?, category_id = ?, sort_order = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [name, url, description, icon, category_id, sort_order, is_active, id]
+      'UPDATE sites SET name = ?, url = ?, description = ?, icon = ?, category_id = ?, sort_order = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [name, url, description, icon, category_id, sort_order, status, id]
     );
 
     res.json({
@@ -382,7 +384,7 @@ router.post('/:id/click', async (req, res) => {
 
     // 检查网站是否存在且激活
     const [sites] = await pool.execute(
-      'SELECT id FROM sites WHERE id = ? AND is_active = 1',
+      'SELECT id FROM sites WHERE id = ? AND status = "active"',
       [id]
     );
 
