@@ -1,12 +1,13 @@
 const mysql = require('mysql2/promise');
+require('dotenv').config();
 
 async function checkMySQLData() {
   try {
     const connection = await mysql.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: '',
-      database: 'navigation_admin'
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'navigation_admin'
     });
     
     const [categories] = await connection.execute('SELECT * FROM categories ORDER BY sort_order');

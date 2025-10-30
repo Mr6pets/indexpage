@@ -1100,7 +1100,13 @@ onMounted(() => {
 .backup-content,
 .restore-content {
   padding: 20px;
+  padding-top: 40px;
   text-align: center;
+}
+
+.backup-content p,
+.restore-content p {
+  margin-bottom: 30px;
 }
 
 .empty-backup {

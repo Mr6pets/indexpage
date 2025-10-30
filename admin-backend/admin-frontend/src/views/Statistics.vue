@@ -364,14 +364,24 @@ const loadOverviewStats = async () => {
     // 处理不同的响应格式
     let overviewData;
     
-    if (response.data.success && response.data.data) {
-      // 标准格式: {success: true, data: {...}}
-      overviewData = response.data.data;
-    } else if (response.data.overview) {
+    if (response.success && response.data && response.data.overview) {
+      // 标准格式: {success: true, data: {overview: {...}}}
+      overviewData = {
+        totalSites: response.data.overview.total_sites,
+        totalCategories: response.data.overview.total_categories,
+        totalUsers: response.data.overview.total_users,
+        totalClicks: response.data.overview.total_clicks
+      };
+    } else if (response.overview) {
       // 直接格式: {overview: {...}}
-      overviewData = response.data.overview;
+      overviewData = {
+        totalSites: response.overview.total_sites,
+        totalCategories: response.overview.total_categories,
+        totalUsers: response.overview.total_users,
+        totalClicks: response.overview.total_clicks
+      };
     } else {
-      console.error('未知的概览统计API响应格式:', response.data);
+      console.error('未知的概览统计API响应格式:', response);
       return;
     }
     
@@ -395,14 +405,20 @@ const loadTrendData = async () => {
     // 处理不同的响应格式
     let trendData;
     
-    if (response.data.success && response.data.data) {
-      // 标准格式: {success: true, data: {...}}
-      trendData = response.data.data;
-    } else if (response.data.dates && response.data.visits) {
+    if (response.success && response.data) {
+      // 标准格式: {success: true, data: {daily_trends: [...], ...}}
+      const dailyTrends = response.data.daily_trends || [];
+      
+      // 转换为图表需要的格式
+      trendData = {
+        dates: dailyTrends.map(item => item.date),
+        visits: dailyTrends.map(item => item.visits)
+      };
+    } else if (response.dates && response.visits) {
       // 直接格式: {dates: [...], visits: [...]}
-      trendData = response.data;
+      trendData = response;
     } else {
-      console.error('未知的访问趋势API响应格式:', response.data);
+      console.error('未知的访问趋势API响应格式:', response);
       return;
     }
     
@@ -427,14 +443,14 @@ const loadCategoryData = async () => {
     // 处理不同的响应格式
     let categoryData;
     
-    if (response.data.success && response.data.data) {
+    if (response.success && response.data) {
       // 标准格式: {success: true, data: [...]}
-      categoryData = response.data.data;
-    } else if (Array.isArray(response.data)) {
-      // 直接格式: [...]
       categoryData = response.data;
+    } else if (Array.isArray(response)) {
+      // 直接格式: [...]
+      categoryData = response;
     } else {
-      console.error('未知的分类统计API响应格式:', response.data);
+      console.error('未知的分类统计API响应格式:', response);
       return;
     }
     
@@ -460,14 +476,14 @@ const loadRankingData = async () => {
     // 处理不同的响应格式
     let rankingData;
     
-    if (response.data.success && response.data.data) {
+    if (response.success && response.data) {
       // 标准格式: {success: true, data: [...]}
-      rankingData = response.data.data;
-    } else if (Array.isArray(response.data)) {
-      // 直接格式: [...]
       rankingData = response.data;
+    } else if (Array.isArray(response)) {
+      // 直接格式: [...]
+      rankingData = response;
     } else {
-      console.error('未知的排行数据API响应格式:', response.data);
+      console.error('未知的排行数据API响应格式:', response);
       return;
     }
     
@@ -491,14 +507,14 @@ const loadBehaviorData = async () => {
     // 处理不同的响应格式
     let behaviorData;
     
-    if (response.data.success && response.data.data) {
+    if (response.success && response.data) {
       // 标准格式: {success: true, data: {...}}
-      behaviorData = response.data.data;
-    } else if (response.data.uniqueVisitors !== undefined) {
-      // 直接格式: {uniqueVisitors: ..., avgSessionTime: ..., ...}
       behaviorData = response.data;
+    } else if (response.uniqueVisitors !== undefined) {
+      // 直接格式: {uniqueVisitors: ..., avgSessionTime: ..., ...}
+      behaviorData = response;
     } else {
-      console.error('未知的用户行为API响应格式:', response.data);
+      console.error('未知的用户行为API响应格式:', response);
       return;
     }
     

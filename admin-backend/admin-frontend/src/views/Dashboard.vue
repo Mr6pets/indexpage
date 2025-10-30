@@ -254,19 +254,19 @@ const loadDashboardData = async () => {
     
     // 获取统计数据
     const response = await request.get('/stats/overview')
-    console.log('仪表盘API响应:', response.data)
+    console.log('仪表盘API响应:', response)
     
     // 处理不同的响应格式
     let overviewData;
     
-    if (response.data.success && response.data.data) {
+    if (response.success && response.data && response.data.overview) {
       // 标准格式: {success: true, data: {overview: {...}}}
-      overviewData = response.data.data.overview;
-    } else if (response.data.overview) {
-      // 直接格式: {overview: {...}}
       overviewData = response.data.overview;
+    } else if (response.overview) {
+      // 直接格式: {overview: {...}}
+      overviewData = response.overview;
     } else {
-      console.error('未知的API响应格式:', response.data);
+      console.error('未知的API响应格式:', response);
       return;
     }
     
