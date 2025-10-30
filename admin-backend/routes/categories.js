@@ -1,5 +1,7 @@
 const express = require('express');
 const { authenticateToken, requireEditor } = require('../middleware/auth');
+const ApiResponse = require('../utils/response');
+const Validator = require('../utils/validator');
 
 // 使用MySQL数据库
 let database;
@@ -17,105 +19,83 @@ const { pool, categoryOperations } = database;
 const router = express.Router();
 
 // 获取所有分类
-router.get('/', async (req, res) => {
-  try {
-    const { page = 1, limit = 10, search = '', active } = req.query;
+router.get('/', ApiResponse.asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, search = '', active } = req.query;
+  
+  // 验证分页参数
+  const pagination = Validator.validatePagination(req.query);
+  
+  let categories = [];
+  let total = 0;
+  
+  if (categoryOperations && !pool) {
+    // 使用模拟数据库
+    let allCategories = categoryOperations.getAll();
     
-    let categories = [];
-    let total = 0;
+    // 搜索过滤
+    if (pagination.search) {
+      allCategories = allCategories.filter(cat => 
+        cat.name.toLowerCase().includes(pagination.search.toLowerCase()) ||
+        (cat.description && cat.description.toLowerCase().includes(pagination.search.toLowerCase()))
+      );
+    }
     
-    if (categoryOperations && !pool) {
-      // 使用模拟数据库
-      let allCategories = categoryOperations.getAll();
-      
-      // 搜索过滤
-      if (search) {
-        allCategories = allCategories.filter(cat => 
-          cat.name.toLowerCase().includes(search.toLowerCase()) ||
-          (cat.description && cat.description.toLowerCase().includes(search.toLowerCase()))
-        );
-      }
-      
-      // 状态过滤
-      if (active !== undefined) {
-        const status = active === 'true' ? 'active' : 'inactive';
-        allCategories = allCategories.filter(cat => cat.status === status);
-      }
-      
-      total = allCategories.length;
-      
-      // 分页
-      const offset = (page - 1) * limit;
-      categories = allCategories.slice(offset, offset + parseInt(limit));
-      
-      // 添加网站数量（模拟）
-      categories = categories.map(cat => ({
-        ...cat,
-        site_count: 0 // 暂时设为0，后续可以实现
-      }));
-      
-    } else {
-      // 使用MySQL数据库
-      const offset = (page - 1) * limit;
+    // 状态过滤
+    if (active !== undefined) {
+      const status = active === 'true' ? 'active' : 'inactive';
+      allCategories = allCategories.filter(cat => cat.status === status);
+    }
+    
+    total = allCategories.length;
+    
+    // 分页
+    categories = allCategories.slice(pagination.offset, pagination.offset + pagination.pageSize);
+    
+    // 添加网站数量（模拟）
+    categories = categories.map(cat => ({
+      ...cat,
+      site_count: 0 // 暂时设为0，后续可以实现
+    }));
+    
+  } else {
+    // 使用MySQL数据库
+    let whereClause = 'WHERE 1=1';
+    let params = [];
 
-      let whereClause = 'WHERE 1=1';
-      let params = [];
-
-      if (search) {
-        whereClause += ' AND (name LIKE ? OR description LIKE ?)';
-        params.push(`%${search}%`, `%${search}%`);
-      }
-
-      if (active !== undefined) {
-        whereClause += ' AND c.status = ?';
-        params.push(active === 'true' ? 'active' : 'inactive');
-      }
-
-      // 获取分类列表
-      const [categoriesResult] = await pool.execute(
-        `SELECT c.*, 
-                COUNT(s.id) as site_count
-         FROM categories c
-         LEFT JOIN sites s ON c.id = s.category_id AND s.status = 'active'
-         ${whereClause}
-         GROUP BY c.id
-         ORDER BY c.sort_order ASC, c.created_at DESC
-         LIMIT ? OFFSET ?`,
-        [...params, parseInt(limit), parseInt(offset)]
-      );
-      categories = categoriesResult;
-
-      // 获取总数
-      const [countResult] = await pool.execute(
-        `SELECT COUNT(DISTINCT c.id) as total FROM categories c ${whereClause}`,
-        params
-      );
-      total = countResult[0].total;
+    if (pagination.search) {
+      whereClause += ' AND (name LIKE ? OR description LIKE ?)';
+      params.push(`%${pagination.search}%`, `%${pagination.search}%`);
     }
 
-    res.json({
-      success: true,
-      data: {
-        categories,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total: total || 0,
-          pages: Math.ceil((total || 0) / limit)
-        }
-      }
-    });
+    if (active !== undefined) {
+      whereClause += ' AND c.status = ?';
+      params.push(active === 'true' ? 'active' : 'inactive');
+    }
 
-  } catch (error) {
-    console.error('获取分类列表错误:', error);
-    console.error('错误堆栈:', error.stack);
-    res.status(500).json({
-      success: false,
-      message: '获取分类列表失败',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    // 获取分类列表
+    const [categoriesResult] = await pool.execute(
+      `SELECT c.*, 
+              COUNT(s.id) as site_count
+       FROM categories c
+       LEFT JOIN sites s ON c.id = s.category_id AND s.status = 'active'
+       ${whereClause}
+       GROUP BY c.id
+       ORDER BY c.sort_order ASC, c.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [...params, pagination.pageSize, pagination.offset]
+    );
+    categories = categoriesResult;
+
+    // 获取总数
+    const [countResult] = await pool.execute(
+      `SELECT COUNT(DISTINCT c.id) as total FROM categories c ${whereClause}`,
+      params
+    );
+    total = countResult[0].total;
   }
-});
+
+  res.paginated(categories, total, pagination.page, pagination.pageSize, '获取分类列表成功');
+}));
 
 // 获取单个分类
 router.get('/:id', async (req, res) => {

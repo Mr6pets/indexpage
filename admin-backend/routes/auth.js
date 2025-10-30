@@ -2,6 +2,8 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { authenticateToken } = require('../middleware/auth');
+const ApiResponse = require('../utils/response');
+const Validator = require('../utils/validator');
 
 // 使用MySQL数据库
 let database;
@@ -19,79 +21,59 @@ const { pool, userOperations } = database;
 const router = express.Router();
 
 // 用户登录
-router.post('/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
+router.post('/login', ApiResponse.asyncHandler(async (req, res) => {
+  const { username, password } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({
-        success: false,
-        message: '用户名和密码不能为空'
-      });
-    }
-
-    let user;
-    
-    // 根据数据库类型选择查询方式
-    if (userOperations) {
-      // 使用模拟数据库
-      user = userOperations.findByUsernameOrEmail(username);
-    } else {
-      // 使用MySQL数据库
-      const [users] = await pool.execute(
-        'SELECT id, username, email, password, role, avatar FROM users WHERE username = ? OR email = ?',
-        [username, username]
-      );
-      user = users.length > 0 ? users[0] : null;
-    }
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: '用户名或密码错误'
-      });
-    }
-
-    // 验证密码
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({
-        success: false,
-        message: '用户名或密码错误'
-      });
-    }
-
-    // 生成 JWT token
-    const token = jwt.sign(
-      { userId: user.id, username: user.username, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
-    // 返回用户信息和 token
-    res.json({
-      success: true,
-      message: '登录成功',
-      data: {
-        token,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          avatar: user.avatar
-        }
-      }
-    });
-
-  } catch (error) {
-    console.error('登录错误:', error);
-    res.status(500).json({
-      success: false,
-      message: '登录失败'
-    });
+  // 验证必填字段
+  const validation = Validator.validateRequired(req.body, ['username', 'password']);
+  if (!validation.isValid) {
+    return res.error(validation.message, ApiResponse.CODE.BAD_REQUEST);
   }
-});
+
+  let user;
+  
+  // 根据数据库类型选择查询方式
+  if (userOperations) {
+    // 使用模拟数据库
+    user = userOperations.findByUsernameOrEmail(username);
+  } else {
+    // 使用MySQL数据库
+    const [users] = await pool.execute(
+      'SELECT id, username, email, password, role, avatar FROM users WHERE username = ? OR email = ?',
+      [username, username]
+    );
+    user = users.length > 0 ? users[0] : null;
+  }
+
+  if (!user) {
+    return res.error('用户名或密码错误', ApiResponse.CODE.UNAUTHORIZED);
+  }
+
+  // 验证密码
+  const isValidPassword = await bcrypt.compare(password, user.password);
+  if (!isValidPassword) {
+    return res.error('用户名或密码错误', ApiResponse.CODE.UNAUTHORIZED);
+  }
+
+  // 生成 JWT token
+  const token = jwt.sign(
+    { userId: user.id, username: user.username, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
+
+  // 返回用户信息和 token
+  res.success({
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar
+    }
+  }, '登录成功');
+}));
 
 // 用户注册
 router.post('/register', async (req, res) => {

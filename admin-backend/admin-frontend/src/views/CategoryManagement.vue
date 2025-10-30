@@ -250,19 +250,16 @@ const loadCategories = async () => {
     const response = await request.get('/categories', { params })
     console.log('分类API响应:', response.data)
     
-    // 处理不同的响应格式
+    // 处理统一的响应格式
     let categoriesData, totalData;
     
-    if (response.data.success && response.data.data) {
-      // 标准格式: {success: true, data: {categories: [...], total: ...}}
-      categoriesData = response.data.data.categories;
-      totalData = response.data.data.total;
-    } else if (response.data.categories) {
-      // 直接格式: {categories: [...], total: ...}
-      categoriesData = response.data.categories;
-      totalData = response.data.total;
+    if (response.success && response.data) {
+      // 标准格式: {success: true, data: {items: [...], pagination: {...}}}
+      categoriesData = response.data.items;
+      totalData = response.data.pagination ? response.data.pagination.total : response.data.total;
     } else {
-      console.error('未知的API响应格式:', response.data);
+      console.error('分类API响应格式错误:', response);
+      ElMessage.error('分类数据格式错误');
       return;
     }
     

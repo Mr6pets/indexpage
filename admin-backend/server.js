@@ -57,6 +57,10 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// 统一响应格式中间件
+const ApiResponse = require('./utils/response');
+app.use(ApiResponse.middleware);
+
 // 静态文件服务
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
@@ -127,10 +131,7 @@ app.get('/api', (req, res) => {
 
 // 404 处理
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: '接口不存在'
-  });
+  res.error('接口不存在', 404);
 });
 
 // 全局错误处理
@@ -139,32 +140,22 @@ app.use((error, req, res, next) => {
   
   // 数据库错误
   if (error.code === 'ER_DUP_ENTRY') {
-    return res.status(400).json({
-      success: false,
-      message: '数据已存在'
-    });
+    return res.error('数据已存在', 409);
   }
   
   // JWT 错误
   if (error.name === 'JsonWebTokenError') {
-    return res.status(401).json({
-      success: false,
-      message: '无效的访问令牌'
-    });
+    return res.error('无效的访问令牌', 401);
   }
   
   // 文件上传错误
   if (error.code === 'LIMIT_FILE_SIZE') {
-    return res.status(400).json({
-      success: false,
-      message: '文件大小超出限制'
-    });
+    return res.error('文件大小超出限制', 400);
   }
   
-  res.status(500).json({
-    success: false,
-    message: process.env.NODE_ENV === 'development' ? error.message : '服务器内部错误'
-  });
+  // 默认服务器错误
+  const message = process.env.NODE_ENV === 'development' ? error.message : '服务器内部错误';
+  res.error(message, 500);
 });
 
 // 启动服务器

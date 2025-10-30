@@ -273,19 +273,16 @@ const loadSites = async () => {
     const response = await request.get('/sites', { params })
     console.log('API响应:', response.data)
     
-    // 处理不同的响应格式
+    // 处理统一的响应格式
     let sitesData, totalData;
     
-    if (response.data.success && response.data.data) {
-      // 标准格式: {success: true, data: {sites: [...], pagination: {...}}}
-      sitesData = response.data.data.sites;
-      totalData = response.data.data.pagination.total;
-    } else if (response.data.sites) {
-      // 直接格式: {sites: [...], pagination: {...}}
-      sitesData = response.data.sites;
-      totalData = response.data.pagination.total;
+    if (response.success && response.data) {
+      // 标准格式: {success: true, data: {items: [...], pagination: {...}}}
+      sitesData = response.data.items;
+      totalData = response.data.pagination ? response.data.pagination.total : response.data.total;
     } else {
-      console.error('未知的API响应格式:', response.data);
+      console.error('API响应格式错误:', response);
+      ElMessage.error('数据格式错误');
       return;
     }
     

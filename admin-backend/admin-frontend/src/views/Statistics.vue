@@ -402,7 +402,7 @@ const loadTrendData = async () => {
     })
     console.log('访问趋势API响应:', response.data)
     
-    // 处理不同的响应格式
+    // 处理统一的响应格式
     let trendData;
     
     if (response.success && response.data) {
@@ -414,11 +414,9 @@ const loadTrendData = async () => {
         dates: dailyTrends.map(item => item.date),
         visits: dailyTrends.map(item => item.visits)
       };
-    } else if (response.dates && response.visits) {
-      // 直接格式: {dates: [...], visits: [...]}
-      trendData = response;
     } else {
-      console.error('未知的访问趋势API响应格式:', response);
+      console.error('访问趋势API响应格式错误:', response);
+      ElMessage.error('访问趋势数据格式错误');
       return;
     }
     
@@ -440,17 +438,15 @@ const loadCategoryData = async () => {
     const response = await request.get('/stats/categories')
     console.log('分类统计API响应:', response.data)
     
-    // 处理不同的响应格式
+    // 处理统一的响应格式
     let categoryData;
     
     if (response.success && response.data) {
       // 标准格式: {success: true, data: [...]}
       categoryData = response.data;
-    } else if (Array.isArray(response)) {
-      // 直接格式: [...]
-      categoryData = response;
     } else {
-      console.error('未知的分类统计API响应格式:', response);
+      console.error('分类统计API响应格式错误:', response);
+      ElMessage.error('分类统计数据格式错误');
       return;
     }
     
@@ -473,17 +469,15 @@ const loadRankingData = async () => {
     })
     console.log('排行数据API响应:', response.data)
     
-    // 处理不同的响应格式
+    // 处理统一的响应格式
     let rankingData;
     
     if (response.success && response.data) {
-      // 标准格式: {success: true, data: [...]}
-      rankingData = response.data;
-    } else if (Array.isArray(response)) {
-      // 直接格式: [...]
-      rankingData = response;
+      // 标准格式: {success: true, data: {items: [...]}}
+      rankingData = response.data.items || response.data;
     } else {
-      console.error('未知的排行数据API响应格式:', response);
+      console.error('排行数据API响应格式错误:', response);
+      ElMessage.error('排行数据格式错误');
       return;
     }
     
@@ -504,17 +498,15 @@ const loadBehaviorData = async () => {
     const response = await request.get('/stats/behavior')
     console.log('用户行为API响应:', response.data)
     
-    // 处理不同的响应格式
+    // 处理统一的响应格式
     let behaviorData;
     
     if (response.success && response.data) {
       // 标准格式: {success: true, data: {...}}
       behaviorData = response.data;
-    } else if (response.uniqueVisitors !== undefined) {
-      // 直接格式: {uniqueVisitors: ..., avgSessionTime: ..., ...}
-      behaviorData = response;
     } else {
-      console.error('未知的用户行为API响应格式:', response);
+      console.error('用户行为API响应格式错误:', response);
+      ElMessage.error('用户行为数据格式错误');
       return;
     }
     

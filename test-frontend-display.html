@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端数据显示测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .category {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .category-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .category-icon {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .site-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        .site-icon {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+        .site-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .site-url {
+            color: #666;
+            font-size: 12px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧭 前端数据显示测试</h1>
+    <div id="app">
+        <div class="loading">正在加载数据...</div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001/api';
+        
+        // 获取分类数据
+        async function fetchCategories() {
+            const response = await fetch(`${API_BASE_URL}/categories`);
+            const data = await response.json();
+            return data.success ? data.data.items : [];
+        }
+        
+        // 获取网站数据
+        async function fetchSites() {
+            const response = await fetch(`${API_BASE_URL}/sites?limit=1000&active=true`);
+            const data = await response.json();
+            return data.success ? data.data.items : [];
+        }
+        
+        // 组织数据
+        function organizeData(categoriesData, sitesData) {
+            return categoriesData.map(category => {
+                return {
+                    name: category.name,
+                    icon: category.icon || '📁',
+                    sites: sitesData.filter(site => site.category_id === category.id)
+                };
+            }).filter(category => category.sites.length > 0);
+        }
+        
+        // 渲染页面
+        function renderCategories(categories) {
+            const app = document.getElementById('app');
+            
+            if (categories.length === 0) {
+                app.innerHTML = '<div class="error">没有找到任何分类数据</div>';
+                return;
+            }
+            
+            let html = `<p>找到 ${categories.length} 个分类，共 ${categories.reduce((sum, cat) => sum + cat.sites.length, 0)} 个网站</p>`;
+            
+            categories.forEach(category => {
+                html += `
+                    <div class="category">
+                        <div class="category-header">
+                            <span class="category-icon">${category.icon}</span>
+                            <span>${category.name} (${category.sites.length} 个网站)</span>
+                        </div>
+                        <div class="sites-grid">
+                `;
+                
+                category.sites.forEach(site => {
+                    html += `
+                        <div class="site-card">
+                            <div class="site-name">
+                                <span class="site-icon">${site.icon || '🌐'}</span>
+                                ${site.name}
+                            </div>
+                            <div class="site-url">${site.url}</div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            app.innerHTML = html;
+        }
+        
+        // 初始化
+        async function init() {
+            try {
+                const [categoriesData, sitesData] = await Promise.all([
+                    fetchCategories(),
+                    fetchSites()
+                ]);
+                
+                console.log('分类数据:', categoriesData);
+                console.log('网站数据:', sitesData);
+                
+                const organizedData = organizeData(categoriesData, sitesData);
+                console.log('组织后的数据:', organizedData);
+                
+                renderCategories(organizedData);
+            } catch (error) {
+                console.error('加载失败:', error);
+                document.getElementById('app').innerHTML = 
+                    `<div class="error">加载失败: ${error.message}</div>`;
+            }
+        }
+        
+        init();
+    </script>
+</body>
+</html>

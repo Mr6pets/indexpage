@@ -87,12 +87,12 @@ const API_BASE_URL = 'http://localhost:3001/api'
 // 获取分类数据
 const fetchCategories = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/categories`)
+    const response = await fetch(`${API_BASE_URL}/categories?active=true`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     const data = await response.json()
-    return data.success ? data.data.categories : []
+    return data.success ? data.data.items : []
   } catch (err) {
     console.error('获取分类数据失败:', err)
     throw err
@@ -102,13 +102,13 @@ const fetchCategories = async () => {
 // 获取网站数据
 const fetchSites = async () => {
   try {
-    // 设置一个足够大的limit来获取所有网站，或者使用特殊参数
-    const response = await fetch(`${API_BASE_URL}/sites?limit=1000`)
+    // 设置一个足够大的limit来获取所有网站，并只获取启用状态的网站
+    const response = await fetch(`${API_BASE_URL}/sites?limit=1000&active=true`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     const data = await response.json()
-    return data.success ? data.data.sites : []
+    return data.success ? data.data.items : []
   } catch (err) {
     console.error('获取网站数据失败:', err)
     throw err
@@ -341,6 +341,7 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.9);
   margin: 0;
   font-weight: 300;
+  text-align: center;
 }
 
 .search-container {

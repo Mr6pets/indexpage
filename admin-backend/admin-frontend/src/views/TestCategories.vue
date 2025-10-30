@@ -61,6 +61,13 @@ const testDirectAPI = async () => {
     const response = await axios.get('http://localhost:3001/api/categories/options/list')
     directResult.value = response.data
     console.log('✅ 直接API调用成功:', response.data)
+    
+    // 处理统一的响应格式
+    if (response.data.success && response.data.data) {
+      categories.value = response.data.data
+    } else {
+      console.error('直接API响应格式错误:', response.data)
+    }
   } catch (err) {
     console.error('❌ 直接API调用失败:', err)
     error.value = `直接API调用失败: ${err.message}`

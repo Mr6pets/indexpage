@@ -335,6 +335,20 @@ const siteOperations = {
       site.updated_at = new Date().toISOString();
     }
     return site;
+  },
+  
+  // 更新网站
+  async update(id, siteData) {
+    const index = database.sites.findIndex(site => site.id === parseInt(id));
+    if (index !== -1) {
+      database.sites[index] = {
+        ...database.sites[index],
+        ...siteData,
+        updated_at: new Date().toISOString()
+      };
+      return database.sites[index];
+    }
+    return null;
   }
 };
 
