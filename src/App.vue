@@ -115,13 +115,27 @@ const fetchSites = async () => {
   }
 }
 
+// 由于数据库已更新为emoji图标，不再需要复杂的映射逻辑
+
+// 为网站分配默认图标
+const assignDefaultIcons = (sites) => {
+  const defaultIcons = ['🌐', '🔗', '📱', '💻', '🛠️', '📊', '🎯', '🚀', '⭐', '🔥']
+  
+  return sites.map((site, index) => ({
+    ...site,
+    icon: site.icon || defaultIcons[index % defaultIcons.length]
+  }))
+}
+
 // 组织数据：将网站按分类分组
 const organizeData = (categoriesData, sitesData) => {
-  return categoriesData.map(category => ({
-    name: category.name,
-    icon: category.icon,
-    sites: sitesData.filter(site => site.category_id === category.id)
-  })).filter(category => category.sites.length > 0) // 只显示有网站的分类
+  return categoriesData.map(category => {
+    return {
+      name: category.name,
+      icon: category.icon || '📁', // 直接使用数据库中的图标，如果为空则使用默认图标
+      sites: assignDefaultIcons(sitesData.filter(site => site.category_id === category.id))
+    }
+  }).filter(category => category.sites.length > 0) // 只显示有网站的分类
 }
 
 // 初始化数据
@@ -151,22 +165,62 @@ const initializeData = async () => {
 const getFallbackData = () => {
   return [
     {
+      name: '搜索引擎',
+      icon: '🔍',
+      sites: [
+        {
+          id: 1,
+          name: '百度',
+          description: '全球最大的中文搜索引擎',
+          url: 'https://www.baidu.com',
+          icon: '🔍'
+        },
+        {
+          id: 2,
+          name: 'Google',
+          description: '全球最大的搜索引擎',
+          url: 'https://www.google.com',
+          icon: '🌐'
+        }
+      ]
+    },
+    {
       name: '我的服务',
       icon: '💧',
       sites: [
         {
-          id: 1,
+          id: 3,
           name: 'VitePress 博客',
           description: '专业的 Vue 3 博客',
           url: 'http://vitepress.guluwater.com/',
           icon: '💧'
         },
         {
-          id: 2,
+          id: 4,
           name: 'Office Tools',
           description: '办公工具集',
           url: 'http://officetools.guluwater.com/',
           icon: '🛠️'
+        },
+        {
+          id: 5,
+          name: 'Online Interface Full',
+          description: '在线接口（完整版）',
+          url: 'http://onlineinterfacefull.guluwater.com/',
+          icon: '🧩'
+        }
+      ]
+    },
+    {
+      name: '设置',
+      icon: '⚙️',
+      sites: [
+        {
+          id: 6,
+          name: '后台管理',
+          description: '系统管理后台',
+          url: 'http://localhost:5173',
+          icon: '⚙️'
         }
       ]
     }

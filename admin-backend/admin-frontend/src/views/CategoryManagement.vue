@@ -315,12 +315,15 @@ const submitForm = async () => {
     
     const response = await request[method](url, form)
     
-    if (response.data.success) {
-      ElMessage.success(isEdit.value ? '更新成功' : '添加成功')
+    if (response.success) {
+      ElMessage.success(response.message || (isEdit.value ? '更新成功' : '添加成功'))
       dialogVisible.value = false
       loadCategories()
+    } else {
+      ElMessage.error(response.message || (isEdit.value ? '更新失败' : '添加失败'))
     }
   } catch (error) {
+    console.error('提交表单错误:', error)
     ElMessage.error(isEdit.value ? '更新失败' : '添加失败')
   } finally {
     submitting.value = false
@@ -335,11 +338,14 @@ const toggleStatus = async (category: any) => {
       status: newStatus
     })
     
-    if (response.data.success) {
+    if (response.success) {
       category.status = newStatus
-      ElMessage.success('状态更新成功')
+      ElMessage.success(response.message || '状态更新成功')
+    } else {
+      ElMessage.error(response.message || '状态更新失败')
     }
   } catch (error) {
+    console.error('状态更新错误:', error)
     ElMessage.error('状态更新失败')
   }
 }
@@ -358,12 +364,15 @@ const deleteCategory = async (category: any) => {
     )
     
     const response = await request.delete(`/categories/${category.id}`)
-    if (response.data.success) {
-      ElMessage.success('删除成功')
+    if (response.success) {
+      ElMessage.success(response.message || '删除成功')
       loadCategories()
+    } else {
+      ElMessage.error(response.message || '删除失败')
     }
   } catch (error) {
     if (error !== 'cancel') {
+      console.error('删除分类错误:', error)
       ElMessage.error('删除失败')
     }
   }

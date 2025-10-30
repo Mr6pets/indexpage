@@ -275,4 +275,178 @@ router.post('/refresh', authenticateToken, async (req, res) => {
   }
 });
 
+// 获取用户资料
+router.get('/profile', authenticateToken, async (req, res) => {
+  try {
+    let user;
+    
+    if (userOperations) {
+      // 使用模拟数据库
+      user = userOperations.findById(req.user.id);
+    } else {
+      // 使用MySQL数据库
+      const [users] = await pool.execute(
+        'SELECT id, username, email, real_name, phone, bio, avatar, role, created_at FROM users WHERE id = ?',
+        [req.user.id]
+      );
+      user = users.length > 0 ? users[0] : null;
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: '用户不存在'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user
+    });
+
+  } catch (error) {
+    console.error('获取用户资料错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取用户资料失败'
+    });
+  }
+});
+
+// 更新用户资料
+router.put('/profile', authenticateToken, async (req, res) => {
+  try {
+    const { email, real_name, phone, bio } = req.body;
+
+    if (userOperations) {
+      // 使用模拟数据库
+      const user = userOperations.findById(req.user.id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: '用户不存在'
+        });
+      }
+
+      // 更新用户信息
+      Object.assign(user, {
+        email: email || user.email,
+        real_name: real_name || user.real_name,
+        phone: phone || user.phone,
+        bio: bio || user.bio
+      });
+    } else {
+      // 使用MySQL数据库
+      // 检查邮箱是否被其他用户使用
+      if (email) {
+        const [duplicateUsers] = await pool.execute(
+          'SELECT id FROM users WHERE email = ? AND id != ?',
+          [email, req.user.id]
+        );
+
+        if (duplicateUsers.length > 0) {
+          return res.status(400).json({
+            success: false,
+            message: '邮箱已被其他用户使用'
+          });
+        }
+      }
+
+      await pool.execute(
+        'UPDATE users SET email = COALESCE(?, email), real_name = ?, phone = ?, bio = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [email, real_name, phone, bio, req.user.id]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: '个人资料更新成功'
+    });
+
+  } catch (error) {
+    console.error('更新用户资料错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '更新用户资料失败'
+    });
+  }
+});
+
+// 修改密码
+router.put('/change-password', authenticateToken, async (req, res) => {
+  try {
+    const { current_password, new_password } = req.body;
+
+    if (!current_password || !new_password) {
+      return res.status(400).json({
+        success: false,
+        message: '当前密码和新密码不能为空'
+      });
+    }
+
+    if (new_password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: '新密码长度不能少于6位'
+      });
+    }
+
+    let user;
+    
+    if (userOperations) {
+      // 使用模拟数据库
+      user = userOperations.findById(req.user.id);
+    } else {
+      // 使用MySQL数据库
+      const [users] = await pool.execute(
+        'SELECT id, password FROM users WHERE id = ?',
+        [req.user.id]
+      );
+      user = users.length > 0 ? users[0] : null;
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: '用户不存在'
+      });
+    }
+
+    // 验证当前密码
+    const isCurrentPasswordValid = await bcrypt.compare(current_password, user.password);
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        message: '当前密码错误'
+      });
+    }
+
+    // 加密新密码
+    const hashedNewPassword = await bcrypt.hash(new_password, 10);
+
+    if (userOperations) {
+      // 使用模拟数据库
+      user.password = hashedNewPassword;
+    } else {
+      // 使用MySQL数据库
+      await pool.execute(
+        'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [hashedNewPassword, req.user.id]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: '密码修改成功'
+    });
+
+  } catch (error) {
+    console.error('修改密码错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '密码修改失败'
+    });
+  }
+});
+
 module.exports = router;

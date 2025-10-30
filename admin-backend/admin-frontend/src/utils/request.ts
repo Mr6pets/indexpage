@@ -46,6 +46,7 @@ service.interceptors.response.use(
       return Promise.reject(new Error(data.message || '请求失败'))
     }
     
+    // 成功的情况，返回完整的data对象
     return data
   },
   async (error) => {

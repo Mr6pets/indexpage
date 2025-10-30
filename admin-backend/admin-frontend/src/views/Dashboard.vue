@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, markRaw } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   Link,
@@ -128,11 +128,32 @@ import {
   Edit,
   Delete
 } from '@element-plus/icons-vue'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart, PieChart } from 'echarts/charts'
+import {
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+} from 'echarts/components'
+import VChart from 'vue-echarts'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { formatNumber, getRelativeTime } from '@/utils'
 import request from '@/utils/request'
+
+// 注册 ECharts 组件
+use([
+  CanvasRenderer,
+  LineChart,
+  PieChart,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+])
 
 // 响应式数据
 const loading = ref(true)
@@ -147,28 +168,28 @@ const statsData = ref([
     value: 0,
     change: 0,
     color: '#1890ff',
-    icon: Link
+    icon: markRaw(Link)
   },
   {
     title: '分类数量',
     value: 0,
     change: 0,
     color: '#52c41a',
-    icon: Collection
+    icon: markRaw(Collection)
   },
   {
     title: '用户数量',
     value: 0,
     change: 0,
     color: '#faad14',
-    icon: User
+    icon: markRaw(User)
   },
   {
     title: '总访问量',
     value: 0,
     change: 0,
     color: '#f5222d',
-    icon: DataAnalysis
+    icon: markRaw(DataAnalysis)
   }
 ])
 
@@ -279,7 +300,7 @@ const loadDashboardData = async () => {
           title: '新增网站',
           description: '添加了 "Vue.js 官网" 到前端开发分类',
           time: new Date(Date.now() - 5 * 60 * 1000),
-          icon: Plus,
+          icon: markRaw(Plus),
           color: '#52c41a'
         },
         {
@@ -287,7 +308,7 @@ const loadDashboardData = async () => {
           title: '编辑分类',
           description: '更新了 "设计工具" 分类的描述信息',
           time: new Date(Date.now() - 15 * 60 * 1000),
-          icon: Edit,
+          icon: markRaw(Edit),
           color: '#1890ff'
         },
         {
@@ -295,7 +316,7 @@ const loadDashboardData = async () => {
           title: '删除网站',
           description: '从数据库分类中删除了过期的网站链接',
           time: new Date(Date.now() - 30 * 60 * 1000),
-          icon: Delete,
+          icon: markRaw(Delete),
           color: '#f5222d'
         }
       ]

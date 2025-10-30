@@ -530,10 +530,22 @@ const loadRealtimeData = async () => {
     
     if (response.data.success && response.data.data) {
       // 标准格式: {success: true, data: {...}}
-      realtimeData = response.data.data;
+      const data = response.data.data;
+      realtimeData = {
+        last5MinVisits: data.recent_visits || 0,
+        onlineUsers: data.online_users || 0,
+        recentSites: data.recent_sites || []
+      };
     } else if (response.data.last5MinVisits !== undefined) {
       // 直接格式: {last5MinVisits: ..., onlineUsers: ..., ...}
       realtimeData = response.data;
+    } else if (response.data.recent_visits !== undefined) {
+      // 新格式: {recent_visits: ..., online_users: ..., recent_sites: ...}
+      realtimeData = {
+        last5MinVisits: response.data.recent_visits,
+        onlineUsers: response.data.online_users,
+        recentSites: response.data.recent_sites || []
+      };
     } else {
       console.error('未知的实时数据API响应格式:', response.data);
       return;

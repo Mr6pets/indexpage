@@ -1,59 +1,155 @@
--- 导航页面数据导出
--- 导出时间: 2025-10-29T07:11:58.664Z
+-- 数据库导出文件
+-- 生成时间: 2025/10/30 11:38:52
 -- 数据库: navigation_admin
 
-USE navigation_admin;
-
--- 清空现有数据
+-- 设置字符集
+SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
-TRUNCATE TABLE sites;
-TRUNCATE TABLE categories;
-TRUNCATE TABLE users;
+
+-- 表结构: access_logs
+DROP TABLE IF EXISTS `access_logs`;
+CREATE TABLE `access_logs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `site_id` int(11) DEFAULT NULL,
+  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text COLLATE utf8mb4_unicode_ci,
+  `referer` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `site_id` (`site_id`),
+  CONSTRAINT `access_logs_ibfk_1` FOREIGN KEY (`site_id`) REFERENCES `sites` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 表结构: categories
+DROP TABLE IF EXISTS `categories`;
+CREATE TABLE `categories` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `icon` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'Link',
+  `sort_order` int(11) DEFAULT '0',
+  `status` enum('active','inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 表数据: categories
+INSERT INTO `categories` (`id`, `name`, `description`, `icon`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
+(1, '常用工具', '日常工作中常用的在线工具', '⚙️', 1, 'active', '2025-10-24 09:43:28', '2025-10-30 03:15:22'),
+(2, '开发资源', '编程开发相关的资源和工具', '📄', 2, 'active', '2025-10-24 09:43:28', '2025-10-30 03:15:22'),
+(3, '学习教育', '在线学习和教育平台', '👤', 3, 'active', '2025-10-24 09:43:28', '2025-10-30 03:15:22'),
+(4, '娱乐休闲', '娱乐和休闲相关的网站', '📊', 4, 'active', '2025-10-24 09:43:28', '2025-10-30 03:15:22'),
+(5, '技术社区', NULL, '👥', 5, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(6, '实用工具', NULL, '🔧', 6, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58');
+
+-- 表结构: settings
+DROP TABLE IF EXISTS `settings`;
+CREATE TABLE `settings` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `key_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text COLLATE utf8mb4_unicode_ci,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `type` enum('string','number','boolean','json') COLLATE utf8mb4_unicode_ci DEFAULT 'string',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key_name` (`key_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 表数据: settings
+INSERT INTO `settings` (`id`, `key_name`, `value`, `description`, `type`, `created_at`, `updated_at`) VALUES
+(1, 'site_title', '咕噜水导航', '网站标题', 'string', '2025-10-24 09:43:28', '2025-10-24 09:43:28'),
+(2, 'site_description', '一个简洁实用的网址导航站', '网站描述', 'string', '2025-10-24 09:43:28', '2025-10-24 09:43:28'),
+(3, 'site_keywords', '导航,网址,工具,资源', '网站关键词', 'string', '2025-10-24 09:43:28', '2025-10-24 09:43:28'),
+(4, 'enable_statistics', 'true', '是否启用访问统计', 'boolean', '2025-10-24 09:43:28', '2025-10-24 09:43:28'),
+(5, 'max_sites_per_category', '20', '每个分类最大网站数量', 'number', '2025-10-24 09:43:28', '2025-10-24 09:43:28');
+
+-- 表结构: sites
+DROP TABLE IF EXISTS `sites`;
+CREATE TABLE `sites` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `icon` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `category_id` int(11) DEFAULT NULL,
+  `click_count` int(11) DEFAULT '0',
+  `sort_order` int(11) DEFAULT '0',
+  `status` enum('active','inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `category_id` (`category_id`),
+  CONSTRAINT `sites_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 表数据: sites
+INSERT INTO `sites` (`id`, `name`, `description`, `url`, `icon`, `category_id`, `click_count`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
+(1, '百度', '全球最大的中文搜索引擎', 'https://www.baidu.com', '🔍', 1, 0, 1, 'active', '2025-10-24 09:43:28', '2025-10-30 03:25:59'),
+(2, 'Google', '全球最大的搜索引擎', 'https://www.google.com', '🔍', 1, 0, 2, 'active', '2025-10-24 09:43:28', '2025-10-30 03:25:59'),
+(3, 'GitHub', '全球最大的代码托管平台', 'https://github.com', '🐙', 2, 0, 1, 'active', '2025-10-24 09:43:28', '2025-10-30 03:25:59'),
+(4, 'Stack Overflow', '程序员问答社区', 'https://stackoverflow.com', '📚', 2, 0, 2, 'active', '2025-10-24 09:43:28', '2025-10-30 03:25:59'),
+(5, 'Online Interface Full', '在线接口（完整版）', 'http://onlineinterfacefull.guluwater.com/', '🧩', 1, 323, 5, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(6, 'Lite Image Previewer', '轻量图像预览器', 'http://liteimagepreviewer.guluwater.com/', '🖼️', 1, 101, 6, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(7, 'Papercraft', '纸艺工具', 'http://papercraft.guluwater.com/', '✂️', 1, 867, 7, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(8, 'Mock Data Generator', '智能数据模拟生成器', 'http://mockdatagenerator.guluwater.com/', '🔄', 1, 737, 8, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(9, 'Vue.js', '渐进式 JavaScript 框架', 'https://vuejs.org/', '💚', 2, 752, 1, 'active', '2025-10-28 23:11:58', '2025-10-30 02:33:03'),
+(10, 'React', 'Facebook 开发的 UI 库', 'https://reactjs.org/', '⚛️', 2, 803, 2, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(11, 'Angular', 'Google 开发的前端框架', 'https://angular.io/', '🅰️', 2, 15, 3, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(12, 'Svelte', '编译时优化的前端框架', 'https://svelte.dev/', '🔥', 2, 387, 4, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(13, 'VS Code', '微软开发的代码编辑器', 'https://code.visualstudio.com/', '💙', 3, 897, 1, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(14, 'WebStorm', 'JetBrains 的 Web IDE', 'https://www.jetbrains.com/webstorm/', '🌊', 3, 853, 2, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(15, 'Chrome DevTools', '浏览器开发者工具', 'https://developer.chrome.com/docs/devtools/', '🔍', 3, 965, 3, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(16, 'Figma', '协作式设计工具', 'https://figma.com/', '🎨', 3, 828, 4, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(17, 'MDN Web Docs', 'Web 技术权威文档', 'https://developer.mozilla.org/', '📖', 4, 504, 1, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(18, 'freeCodeCamp', '免费编程学习平台', 'https://www.freecodecamp.org/', '🔥', 4, 147, 2, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(19, 'Codecademy', '交互式编程学习', 'https://www.codecademy.com/', '🎓', 4, 712, 3, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(20, 'JavaScript.info', 'JavaScript 深度教程', 'https://javascript.info/', '📚', 4, 44, 4, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(21, 'Stack Overflow', '程序员问答社区', 'https://stackoverflow.com/', '📚', 5, 404, 1, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(22, 'GitHub Discussions', 'GitHub 社区讨论', 'https://github.com/discussions', '💬', 5, 484, 2, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(23, 'Dev.to', '开发者社区平台', 'https://dev.to/', '👩‍💻', 5, 877, 3, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(24, 'Reddit Programming', 'Reddit 编程社区', 'https://www.reddit.com/r/programming/', '🤖', 5, 334, 4, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(25, 'Can I Use', '浏览器兼容性查询', 'https://caniuse.com/', '✅', 6, 950, 1, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(26, 'RegExr', '正则表达式测试工具', 'https://regexr.com/', '🔤', 6, 693, 2, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(27, 'JSON Formatter', 'JSON 格式化工具', 'https://jsonformatter.curiousconcept.com/', '📋', 6, 853, 3, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(28, 'Color Hunt', '配色方案灵感', 'https://colorhunt.co/', '🎨', 6, 18, 4, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58'),
+(29, 'Postman', 'API 开发测试工具', 'https://www.postman.com/', '📮', 6, 891, 5, 'active', '2025-10-28 23:11:58', '2025-10-28 23:11:58');
+
+-- 表结构: statistics
+DROP TABLE IF EXISTS `statistics`;
+CREATE TABLE `statistics` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `site_id` int(11) DEFAULT NULL,
+  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text COLLATE utf8mb4_unicode_ci,
+  `referer` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `visited_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_site_id` (`site_id`),
+  KEY `idx_visited_at` (`visited_at`),
+  CONSTRAINT `statistics_ibfk_1` FOREIGN KEY (`site_id`) REFERENCES `sites` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 表结构: users
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` enum('admin','user') COLLATE utf8mb4_unicode_ci DEFAULT 'user',
+  `avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` enum('active','inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 表数据: users
+INSERT INTO `users` (`id`, `username`, `email`, `password`, `role`, `avatar`, `status`, `created_at`, `updated_at`) VALUES
+(1, 'admin', 'admin@example.com', '$2b$10$DqzMvvK.PDsgeKr6hfV9POKFVyM6ic1U4DVO64d7au7iSwQ1W7sC6', 'admin', NULL, 'active', '2025-10-29 08:37:00', '2025-10-29 08:37:00');
+
 SET FOREIGN_KEY_CHECKS = 1;
-
--- 用户数据
-INSERT INTO users (id, username, email, password, role, avatar, created_at, updated_at) VALUES (1, 'admin', 'admin@example.com', '$2a$10$LTPB/RYlDwEbBZ1SuXa4eupeSGGYRe/e69JApqn/B1ohrgvycsIfm', 'admin', NULL, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-
--- 分类数据
-INSERT INTO categories (id, name, icon, sort_order, status, created_at, updated_at) VALUES (1, '我的服务', '🏠', 1, 'active', '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO categories (id, name, icon, sort_order, status, created_at, updated_at) VALUES (2, '前端框架', '⚛️', 2, 'active', '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO categories (id, name, icon, sort_order, status, created_at, updated_at) VALUES (3, '开发工具', '🛠️', 3, 'active', '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO categories (id, name, icon, sort_order, status, created_at, updated_at) VALUES (4, '学习资源', '📚', 4, 'active', '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO categories (id, name, icon, sort_order, status, created_at, updated_at) VALUES (5, '技术社区', '👥', 5, 'active', '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO categories (id, name, icon, sort_order, status, created_at, updated_at) VALUES (6, '实用工具', '🔧', 6, 'active', '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-
--- 网站数据
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (1, 'VitePress 博客', 'http://vitepress.guluwater.com/', '专业的 Vue 3 博客', '💧', 1, 1, 'active', 25, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (2, 'Office Tools', 'http://officetools.guluwater.com/', '办公工具集', '🛠️', 1, 2, 'active', 718, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (3, 'General Methods Utils', 'http://generalmethodsutils.guluwater.com/', '通用方法工具集', '🧰', 1, 3, 'active', 429, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (4, 'Online Interface Lite', 'http://onlineinterfacelite.guluwater.com/', '在线接口（轻量版）', '🔌', 1, 4, 'active', 235, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (5, 'Online Interface Full', 'http://onlineinterfacefull.guluwater.com/', '在线接口（完整版）', '🧩', 1, 5, 'active', 323, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (6, 'Lite Image Previewer', 'http://liteimagepreviewer.guluwater.com/', '轻量图像预览器', '🖼️', 1, 6, 'active', 101, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (7, 'Papercraft', 'http://papercraft.guluwater.com/', '纸艺工具', '✂️', 1, 7, 'active', 867, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (8, 'Mock Data Generator', 'http://mockdatagenerator.guluwater.com/', '智能数据模拟生成器', '🔄', 1, 8, 'active', 737, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (9, 'Vue.js', 'https://vuejs.org/', '渐进式 JavaScript 框架', '💚', 2, 1, 'active', 752, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (10, 'React', 'https://reactjs.org/', 'Facebook 开发的 UI 库', '⚛️', 2, 2, 'active', 803, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (11, 'Angular', 'https://angular.io/', 'Google 开发的前端框架', '🅰️', 2, 3, 'active', 15, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (12, 'Svelte', 'https://svelte.dev/', '编译时优化的前端框架', '🔥', 2, 4, 'active', 387, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (13, 'VS Code', 'https://code.visualstudio.com/', '微软开发的代码编辑器', '💙', 3, 1, 'active', 897, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (14, 'WebStorm', 'https://www.jetbrains.com/webstorm/', 'JetBrains 的 Web IDE', '🌊', 3, 2, 'active', 853, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (15, 'Chrome DevTools', 'https://developer.chrome.com/docs/devtools/', '浏览器开发者工具', '🔍', 3, 3, 'active', 965, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (16, 'Figma', 'https://figma.com/', '协作式设计工具', '🎨', 3, 4, 'active', 828, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (17, 'MDN Web Docs', 'https://developer.mozilla.org/', 'Web 技术权威文档', '📖', 4, 1, 'active', 504, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (18, 'freeCodeCamp', 'https://www.freecodecamp.org/', '免费编程学习平台', '🔥', 4, 2, 'active', 147, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (19, 'Codecademy', 'https://www.codecademy.com/', '交互式编程学习', '🎓', 4, 3, 'active', 712, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (20, 'JavaScript.info', 'https://javascript.info/', 'JavaScript 深度教程', '📚', 4, 4, 'active', 44, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (21, 'Stack Overflow', 'https://stackoverflow.com/', '程序员问答社区', '📚', 5, 1, 'active', 404, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (22, 'GitHub Discussions', 'https://github.com/discussions', 'GitHub 社区讨论', '💬', 5, 2, 'active', 484, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (23, 'Dev.to', 'https://dev.to/', '开发者社区平台', '👩‍💻', 5, 3, 'active', 877, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (24, 'Reddit Programming', 'https://www.reddit.com/r/programming/', 'Reddit 编程社区', '🤖', 5, 4, 'active', 334, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (25, 'Can I Use', 'https://caniuse.com/', '浏览器兼容性查询', '✅', 6, 1, 'active', 950, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (26, 'RegExr', 'https://regexr.com/', '正则表达式测试工具', '🔤', 6, 2, 'active', 693, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (27, 'JSON Formatter', 'https://jsonformatter.curiousconcept.com/', 'JSON 格式化工具', '📋', 6, 3, 'active', 853, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (28, 'Color Hunt', 'https://colorhunt.co/', '配色方案灵感', '🎨', 6, 4, 'active', 18, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-INSERT INTO sites (id, name, url, description, icon, category_id, sort_order, status, click_count, created_at, updated_at) VALUES (29, 'Postman', 'https://www.postman.com/', 'API 开发测试工具', '📮', 6, 5, 'active', 891, '2025-10-29 07:11:58', '2025-10-29 07:11:58');
-
--- 重置自增ID
-ALTER TABLE users AUTO_INCREMENT = 2;
-ALTER TABLE categories AUTO_INCREMENT = 7;
-ALTER TABLE sites AUTO_INCREMENT = 30;

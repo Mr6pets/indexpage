@@ -50,8 +50,15 @@
         <el-table-column prop="name" label="网站名称" min-width="150">
           <template #default="{ row }">
             <div class="site-info">
+              <!-- 判断是否为emoji图标或图片URL -->
+              <div 
+                v-if="row.icon && isEmojiIcon(row.icon)"
+                class="site-icon emoji-icon"
+              >
+                {{ row.icon }}
+              </div>
               <LazyImage 
-                v-if="row.icon"
+                v-else-if="row.icon"
                 :src="row.icon" 
                 :alt="row.name" 
                 class="site-icon"
@@ -61,6 +68,7 @@
                 :show-error-text="false"
                 :show-retry="false"
               />
+              <div class="site-icon default-icon" v-else>🌐</div>
               <div>
                 <div class="site-name">{{ row.name }}</div>
                 <div class="site-description">{{ row.description }}</div>
@@ -240,6 +248,17 @@ const rules = {
 }
 
 // 方法
+// 判断是否为emoji图标
+const isEmojiIcon = (icon: string) => {
+  // 检查是否为URL格式
+  if (icon.startsWith('http://') || icon.startsWith('https://') || icon.startsWith('data:')) {
+    return false
+  }
+  // 检查是否包含emoji字符
+  const emojiRegex = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u
+  return emojiRegex.test(icon) || icon.length <= 4
+}
+
 const loadSites = async () => {
   loading.value = true
   try {
@@ -284,8 +303,8 @@ const loadSites = async () => {
 const loadCategories = async () => {
   try {
     const response = await request.get('/categories/options/list')
-    if (response.data.success) {
-      categories.value = response.data.data
+    if (response.success) {
+      categories.value = response.data
     }
   } catch (error) {
     console.error('加载分类失败:', error)
@@ -332,18 +351,19 @@ const submitForm = async () => {
     
     const response = await request[method](url, form)
     
-    if (response.data.success) {
-      ElMessage.success(isEdit.value ? '更新成功' : '添加成功')
+    if (response.success) {
+      ElMessage.success(response.message || (isEdit.value ? '更新成功' : '添加成功'))
       dialogVisible.value = false
       loadSites()
     } else {
-      ElMessage.error(response.data.message || '操作失败')
+      ElMessage.error(response.message || (isEdit.value ? '更新失败' : '添加失败'))
     }
   } catch (error: any) {
+    console.error('提交表单错误:', error)
     if (error.response?.data?.message) {
       ElMessage.error(error.response.data.message)
     } else {
-      ElMessage.error('操作失败')
+      ElMessage.error(isEdit.value ? '更新失败' : '添加失败')
     }
   } finally {
     submitting.value = false
@@ -358,11 +378,14 @@ const toggleStatus = async (site: any) => {
       status: newStatus
     })
     
-    if (response.data.success) {
+    if (response.success) {
       site.status = newStatus
-      ElMessage.success('状态更新成功')
+      ElMessage.success(response.message || '状态更新成功')
+    } else {
+      ElMessage.error(response.message || '状态更新失败')
     }
   } catch (error) {
+    console.error('状态更新错误:', error)
     ElMessage.error('状态更新失败')
   }
 }
@@ -380,12 +403,15 @@ const deleteSite = async (site: any) => {
     )
     
     const response = await request.delete(`/sites/${site.id}`)
-    if (response.data.success) {
-      ElMessage.success('删除成功')
+    if (response.success) {
+      ElMessage.success(response.message || '删除成功')
       loadSites()
+    } else {
+      ElMessage.error(response.message || '删除失败')
     }
   } catch (error: any) {
     if (error !== 'cancel') {
+      console.error('删除网站错误:', error)
       ElMessage.error('删除失败')
     }
   }
@@ -451,6 +477,21 @@ onMounted(() => {
   height: 24px;
   margin-right: 8px;
   border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emoji-icon {
+  font-size: 18px;
+  background: none;
+  border: none;
+}
+
+.default-icon {
+  font-size: 16px;
+  background: #f5f5f5;
+  color: #666;
 }
 
 .site-name {

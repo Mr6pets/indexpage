@@ -10,6 +10,7 @@ const CategoryManagement = () => import('@/views/CategoryManagement.vue')
 const UserManagement = () => import('@/views/UserManagement.vue')
 const Settings = () => import('@/views/Settings.vue')
 const Statistics = () => import('@/views/Statistics.vue')
+const Profile = () => import('@/views/Profile.vue')
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -52,6 +53,12 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Statistics',
         component: Statistics,
         meta: { title: '数据统计', icon: 'DataAnalysis' }
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: Profile,
+        meta: { title: '个人资料', icon: 'User' }
       },
       {
         path: 'settings',

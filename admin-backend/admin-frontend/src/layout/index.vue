@@ -155,9 +155,6 @@ import {
   Setting,
   User,
   DataAnalysis,
-  Fold,
-  Expand,
-  Avatar,
   SwitchButton,
   Sunny,
   Moon,
@@ -166,6 +163,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
+import { addPassiveEventListener } from '@/utils/performance'
 
 const router = useRouter()
 const route = useRoute()
@@ -174,6 +172,7 @@ const appStore = useAppStore()
 
 // 响应式检测
 const isMobile = ref(false)
+let cleanupResizeListener: (() => void) | null = null
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
@@ -233,7 +232,7 @@ watch(
 
 onMounted(() => {
   checkMobile()
-  window.addEventListener('resize', checkMobile)
+  cleanupResizeListener = addPassiveEventListener(window, 'resize', checkMobile)
   
   // 获取当前用户信息
   if (authStore.isAuthenticated) {
@@ -242,7 +241,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile)
+  if (cleanupResizeListener) {
+    cleanupResizeListener()
+    cleanupResizeListener = null
+  }
 })
 </script>
 

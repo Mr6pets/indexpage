@@ -63,7 +63,7 @@
                 action="#"
                 :show-file-list="false"
                 :before-upload="beforeFaviconUpload"
-                :http-request="uploadFavicon"
+                :http-request="handleFaviconUpload"
               >
                 <img v-if="basicSettings.site_favicon" :src="basicSettings.site_favicon" class="favicon" />
                 <el-icon v-else class="favicon-uploader-icon"><Plus /></el-icon>
@@ -383,6 +383,7 @@ import request from '@/utils/request'
 
 // 响应式数据
 const activeTab = ref('basic')
+const loading = ref(false)
 const basicSaving = ref(false)
 const displaySaving = ref(false)
 const securitySaving = ref(false)
@@ -390,6 +391,13 @@ const emailSaving = ref(false)
 const emailTesting = ref(false)
 const backupLoading = ref(false)
 const backupCreating = ref(false)
+const logoUploading = ref(false)
+const faviconUploading = ref(false)
+const restoreUploading = ref(false)
+const basicSubmitting = ref(false)
+const displaySubmitting = ref(false)
+const securitySubmitting = ref(false)
+const emailSubmitting = ref(false)
 
 const basicFormRef = ref<FormInstance>()
 const displayFormRef = ref<FormInstance>()
@@ -403,6 +411,42 @@ const basicSettings = reactive({
   site_logo: '',
   site_favicon: '',
   icp_number: ''
+})
+
+// 添加缺失的表单变量
+const basicForm = reactive({
+  site_name: '',
+  site_description: '',
+  site_keywords: '',
+  site_logo: '',
+  site_favicon: ''
+})
+
+const displayForm = reactive({
+  theme: 'light',
+  layout: 'grid',
+  items_per_page: 20,
+  show_category_icons: true,
+  show_site_descriptions: true
+})
+
+const securityForm = reactive({
+  allow_registration: true,
+  registration_approval: false,
+  jwt_secret: '',
+  token_expire_hours: 24,
+  enable_access_log: true,
+  ip_whitelist: ''
+})
+
+const emailForm = reactive({
+  enable_email: false,
+  smtp_host: '',
+  smtp_port: 587,
+  smtp_encryption: 'tls',
+  smtp_username: '',
+  smtp_password: '',
+  from_name: ''
 })
 
 const displaySettings = reactive({
@@ -435,6 +479,7 @@ const emailSettings = reactive({
 })
 
 const backupList = ref([])
+const backups = ref([])
 
 // 方法
 const loadSettings = async () => {
@@ -577,6 +622,35 @@ const beforeLogoUpload: UploadProps['beforeUpload'] = (file) => {
   return true
 }
 
+const beforeFaviconUpload: UploadProps['beforeUpload'] = (file) => {
+  const isImage = file.type === 'image/x-icon' || file.type === 'image/png'
+  const isLt1M = file.size / 1024 / 1024 < 1
+
+  if (!isImage) {
+    ElMessage.error('Favicon只能是 ICO/PNG 格式!')
+    return false
+  }
+  if (!isLt1M) {
+    ElMessage.error('Favicon大小不能超过 1MB!')
+    return false
+  }
+  return true
+}
+
+const testEmail = async () => {
+  try {
+    emailTesting.value = true
+    const response = await request.post('/settings/test-email', emailForm)
+    if (response.data.success) {
+      ElMessage.success('测试邮件发送成功')
+    }
+  } catch (error) {
+    ElMessage.error('测试邮件发送失败')
+  } finally {
+    emailTesting.value = false
+  }
+}
+
 const uploadLogo = async (options: any) => {
   const formData = new FormData()
   formData.append('file', options.file)
@@ -672,6 +746,25 @@ const deleteBackup = async (backup: any) => {
   }
 }
 
+const downloadBackup = async (backup: any) => {
+  try {
+    const response = await request.get(`/settings/backup/${backup.id}/download`, {
+      responseType: 'blob'
+    })
+    
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', backup.name)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    ElMessage.error('下载失败')
+  }
+}
+
 const handleRestoreUpload: UploadProps['customRequest'] = async (options) => {
   const formData = new FormData()
   formData.append('backup', options.file)
@@ -712,7 +805,7 @@ const formatTime = (timestamp: string) => {
 // 生命周期
 onMounted(() => {
   loadSettings()
-  loadBackupList()
+  loadBackups()
 })
 </script>
 

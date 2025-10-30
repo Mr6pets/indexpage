@@ -127,6 +127,7 @@ export class VirtualScroller {
   private startIndex = 0
   private endIndex = 0
   private scrollTop = 0
+  private cleanupScrollListener: (() => void) | null = null
 
   constructor(
     container: HTMLElement,
@@ -144,7 +145,11 @@ export class VirtualScroller {
 
   private init() {
     this.container.style.height = `${this.items.length * this.itemHeight}px`
-    this.container.addEventListener('scroll', this.handleScroll.bind(this))
+    this.cleanupScrollListener = addPassiveEventListener(
+      this.container,
+      'scroll',
+      this.handleScroll.bind(this)
+    )
     this.updateVisibleItems()
   }
 
@@ -177,7 +182,10 @@ export class VirtualScroller {
   }
 
   destroy() {
-    this.container.removeEventListener('scroll', this.handleScroll)
+    if (this.cleanupScrollListener) {
+      this.cleanupScrollListener()
+      this.cleanupScrollListener = null
+    }
   }
 }
 
@@ -353,11 +361,9 @@ export function onVisibilityChange(callback: (isVisible: boolean) => void) {
     callback(!document.hidden)
   }
 
-  document.addEventListener('visibilitychange', handleVisibilityChange)
+  const cleanup = addPassiveEventListener(document, 'visibilitychange', handleVisibilityChange)
   
-  return () => {
-    document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }
+  return cleanup
 }
 
 // 网络状态监控
@@ -365,11 +371,66 @@ export function onNetworkChange(callback: (isOnline: boolean) => void) {
   const handleOnline = () => callback(true)
   const handleOffline = () => callback(false)
 
-  window.addEventListener('online', handleOnline)
-  window.addEventListener('offline', handleOffline)
+  const cleanup = addMultiplePassiveListeners(window, [
+    { type: 'online', listener: handleOnline },
+    { type: 'offline', listener: handleOffline }
+  ])
+
+  return cleanup
+}
+
+/**
+ * 被动事件监听器工具
+ */
+export interface PassiveEventOptions {
+  passive?: boolean
+  capture?: boolean
+  once?: boolean
+}
+
+/**
+ * 添加被动事件监听器
+ * 自动为滚动相关事件设置 passive: true 以提升性能
+ */
+export function addPassiveEventListener(
+  element: Element | Window | Document,
+  type: string,
+  listener: EventListener,
+  options: PassiveEventOptions = {}
+): () => void {
+  // 滚动相关事件默认使用 passive
+  const scrollEvents = ['scroll', 'wheel', 'mousewheel', 'touchstart', 'touchmove']
+  const shouldBePassive = scrollEvents.includes(type) && options.passive !== false
+  
+  const finalOptions: AddEventListenerOptions = {
+    ...options,
+    passive: shouldBePassive || options.passive
+  }
+
+  element.addEventListener(type, listener, finalOptions)
+
+  // 返回清理函数
+  return () => {
+    element.removeEventListener(type, listener, finalOptions)
+  }
+}
+
+/**
+ * 批量添加被动事件监听器
+ */
+export function addMultiplePassiveListeners(
+  element: Element | Window | Document,
+  events: Array<{
+    type: string
+    listener: EventListener
+    options?: PassiveEventOptions
+  }>
+): () => void {
+  const cleanupFunctions = events.map(({ type, listener, options }) =>
+    addPassiveEventListener(element, type, listener, options)
+  )
 
   return () => {
-    window.removeEventListener('online', handleOnline)
-    window.removeEventListener('offline', handleOffline)
+    cleanupFunctions.forEach(cleanup => cleanup())
   }
 }

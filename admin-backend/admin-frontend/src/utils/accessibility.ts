@@ -2,12 +2,15 @@
  * 无障碍访问工具
  */
 
+import { addPassiveEventListener, addMultiplePassiveListeners } from './performance'
+
 // 键盘导航管理器
 export class KeyboardNavigationManager {
   private focusableElements: HTMLElement[] = []
   private currentIndex = -1
   private container: HTMLElement | null = null
   private isActive = false
+  private cleanupListeners: (() => void) | null = null
 
   constructor(container?: HTMLElement) {
     this.container = container || document.body
@@ -45,8 +48,10 @@ export class KeyboardNavigationManager {
     this.isActive = true
     this.updateFocusableElements()
     
-    document.addEventListener('keydown', this.handleKeyDown)
-    document.addEventListener('focusin', this.handleFocusIn)
+    this.cleanupListeners = addMultiplePassiveListeners(document, [
+      { type: 'keydown', listener: this.handleKeyDown },
+      { type: 'focusin', listener: this.handleFocusIn }
+    ])
   }
 
   // 停用键盘导航
@@ -54,8 +59,10 @@ export class KeyboardNavigationManager {
     if (!this.isActive) return
 
     this.isActive = false
-    document.removeEventListener('keydown', this.handleKeyDown)
-    document.removeEventListener('focusin', this.handleFocusIn)
+    if (this.cleanupListeners) {
+      this.cleanupListeners()
+      this.cleanupListeners = null
+    }
   }
 
   // 处理键盘事件
@@ -255,6 +262,7 @@ export class FocusTrap {
   private container: HTMLElement
   private previousActiveElement: HTMLElement | null = null
   private isActive = false
+  private cleanupListener: (() => void) | null = null
 
   constructor(container: HTMLElement) {
     this.container = container
@@ -273,7 +281,7 @@ export class FocusTrap {
       firstFocusable.focus()
     }
 
-    document.addEventListener('keydown', this.handleKeyDown)
+    this.cleanupListener = addPassiveEventListener(document, 'keydown', this.handleKeyDown)
   }
 
   // 停用焦点陷阱
@@ -281,7 +289,10 @@ export class FocusTrap {
     if (!this.isActive) return
 
     this.isActive = false
-    document.removeEventListener('keydown', this.handleKeyDown)
+    if (this.cleanupListener) {
+      this.cleanupListener()
+      this.cleanupListener = null
+    }
 
     // 恢复之前的焦点
     if (this.previousActiveElement) {
@@ -429,17 +440,25 @@ export function initAccessibility() {
   // 检测用户是否使用键盘导航
   let isUsingKeyboard = false
 
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Tab') {
-      isUsingKeyboard = true
-      document.body.classList.add('using-keyboard')
+  const cleanupKeyboardDetection = addMultiplePassiveListeners(document, [
+    {
+      type: 'keydown',
+      listener: (event: Event) => {
+        const keyEvent = event as KeyboardEvent
+        if (keyEvent.key === 'Tab') {
+          isUsingKeyboard = true
+          document.body.classList.add('using-keyboard')
+        }
+      }
+    },
+    {
+      type: 'mousedown',
+      listener: () => {
+        isUsingKeyboard = false
+        document.body.classList.remove('using-keyboard')
+      }
     }
-  })
-
-  document.addEventListener('mousedown', () => {
-    isUsingKeyboard = false
-    document.body.classList.remove('using-keyboard')
-  })
+  ])
 
   // 添加跳转到主内容的链接
   const skipLink = document.createElement('a')
@@ -458,16 +477,31 @@ export function initAccessibility() {
     border-radius: 4px;
   `
 
-  skipLink.addEventListener('focus', () => {
-    skipLink.style.top = '6px'
-  })
-
-  skipLink.addEventListener('blur', () => {
-    skipLink.style.top = '-40px'
-  })
+  const cleanupSkipLink = addMultiplePassiveListeners(skipLink, [
+    {
+      type: 'focus',
+      listener: () => {
+        skipLink.style.top = '6px'
+      }
+    },
+    {
+      type: 'blur',
+      listener: () => {
+        skipLink.style.top = '-40px'
+      }
+    }
+  ])
 
   document.body.insertBefore(skipLink, document.body.firstChild)
 
+  // 返回清理函数
+  return () => {
+    cleanupKeyboardDetection()
+    cleanupSkipLink()
+    if (skipLink.parentNode) {
+      skipLink.parentNode.removeChild(skipLink)
+    }
+  }
   // 确保主内容区域有正确的ID
   const mainContent = document.querySelector('main') || 
                      document.querySelector('#app') ||
@@ -475,5 +509,14 @@ export function initAccessibility() {
   
   if (mainContent && !mainContent.id) {
     mainContent.id = 'main-content'
+  }
+
+  // 返回清理函数
+  return () => {
+    cleanupKeyboardDetection()
+    cleanupSkipLink()
+    if (skipLink.parentNode) {
+      skipLink.parentNode.removeChild(skipLink)
+    }
   }
 }
