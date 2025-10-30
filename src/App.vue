@@ -84,6 +84,11 @@ const error = ref(null)
 // API 基础 URL
 const API_BASE_URL = 'http://localhost:3001/api'
 
+// 跳转到管理后台
+const goToAdmin = () => {
+  window.open('http://localhost:5174', '_blank')
+}
+
 // 获取分类数据
 const fetchCategories = async () => {
   try {
@@ -245,10 +250,6 @@ const filteredCategories = computed(() => {
 
 const openSite = (url) => {
   window.open(url, '_blank')
-}
-
-const goToAdmin = () => {
-  window.open('http://localhost:5173', '_blank')
 }
 
 // 组件挂载时初始化数据

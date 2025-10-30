@@ -32,7 +32,8 @@ app.use(cors({
     process.env.FRONTEND_URL || 'http://localhost:5173',
     process.env.ADMIN_FRONTEND_URL || 'http://localhost:3000',
     'http://localhost:3000',
-    'http://localhost:5173'
+    'http://localhost:5173',
+    'http://localhost:5174'  // 添加admin-frontend的端口
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
