@@ -266,19 +266,23 @@ onMounted(() => {
 }
 
 .header {
-  margin-bottom: 3rem;
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 4rem;
 }
 
 .header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
+  gap: 2rem;
 }
 
 .title-section {
-  text-align: left;
+  flex: 1;
 }
 
 .admin-section {
@@ -288,59 +292,84 @@ onMounted(() => {
 
 .admin-btn {
   background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.3);
   color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   padding: 0.75rem 1.5rem;
   border-radius: 50px;
-  font-size: 1rem;
-  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  backdrop-filter: blur(10px);
 }
 
 .admin-btn:hover {
   background: rgba(255, 255, 255, 0.3);
   border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.admin-btn:active {
+  transform: translateY(-1px) scale(1.01);
 }
 
 .admin-icon {
-  font-size: 1.1rem;
+  font-size: 1.1em;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
-@media (max-width: 768px) {
+@media (max-width: 968px) {
   .header-content {
     flex-direction: column;
-    gap: 1rem;
+    align-items: center;
+    gap: 2rem;
+    text-align: center;
   }
   
   .title-section {
     text-align: center;
+  }
+  
+  .admin-section {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 2.5rem;
+  }
+  
+  .subtitle {
+    font-size: 1.1rem;
   }
 }
 
 .title {
   font-size: 3rem;
   font-weight: 700;
-  color: white;
-  margin-bottom: 0.5rem;
-  text-shadow: none;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .icon {
   margin-right: 1rem;
+  display: inline-block;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .subtitle {
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
-  font-weight: 300;
+  font-weight: 400;
+  line-height: 1.4;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
@@ -494,7 +523,11 @@ onMounted(() => {
   }
   
   .title {
-    font-size: 2.5rem;
+    font-size: 2.8rem;
+  }
+  
+  .subtitle {
+    font-size: 1.2rem;
   }
   
   .category-title {
@@ -517,11 +550,11 @@ onMounted(() => {
   }
   
   .title {
-    font-size: 2rem;
+    font-size: 2.4rem;
   }
   
   .subtitle {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
   
   .search-input {
@@ -543,6 +576,28 @@ onMounted(() => {
 }
 
 @media (max-width: 480px) {
+  .title {
+    font-size: 2rem;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+  }
+  
+  .header {
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+  }
+  
+  .header-content {
+    padding: 0 0.5rem;
+  }
+  
+  .admin-section {
+    position: static;
+    margin-top: 1.5rem;
+  }
+  
   .navigation-container {
     padding: 1rem 0.25rem;
   }
@@ -554,14 +609,6 @@ onMounted(() => {
   .sites-grid {
     grid-template-columns: 1fr 1fr;
     gap: 0.6rem;
-  }
-  
-  .title {
-    font-size: 1.8rem;
-  }
-  
-  .subtitle {
-    font-size: 0.9rem;
   }
   
   .search-input {
@@ -593,6 +640,11 @@ onMounted(() => {
   
   .category-icon {
     font-size: 1.5rem;
+  }
+  
+  .admin-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.7rem;
   }
 }
 

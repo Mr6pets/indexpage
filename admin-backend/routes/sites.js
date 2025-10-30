@@ -116,7 +116,11 @@ router.get('/:id', ApiResponse.asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   // 验证ID参数
-  const validatedId = Validator.validateId(id, '网站ID');
+  const idValidation = Validator.validateId(id, '网站ID');
+  if (!idValidation.isValid) {
+    return res.error(idValidation.message, ApiResponse.CODE.VALIDATION_ERROR);
+  }
+  const validatedId = idValidation.id;
 
   const [sites] = await pool.execute(
     `SELECT s.*, c.name as category_name, c.icon as category_icon
@@ -182,7 +186,11 @@ router.put('/:id', authenticateToken, requireEditor, ApiResponse.asyncHandler(as
   const { name, url, description, icon, category_id, sort_order, status } = req.body;
 
   // 验证ID参数
-  const validatedId = Validator.validateId(id, '网站ID');
+  const idValidation = Validator.validateId(id, '网站ID');
+  if (!idValidation.isValid) {
+    return res.error(idValidation.message, ApiResponse.CODE.VALIDATION_ERROR);
+  }
+  const validatedId = idValidation.id;
 
   // 验证必填字段
   Validator.validateRequired({ name, url }, ['name', 'url']);
@@ -254,7 +262,16 @@ router.put('/:id', authenticateToken, requireEditor, ApiResponse.asyncHandler(as
 
     await pool.execute(
       'UPDATE sites SET name = ?, url = ?, description = ?, icon = ?, category_id = ?, sort_order = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [name, url, description, icon, category_id, sort_order, status, validatedId]
+      [
+        name, 
+        url, 
+        description || null, 
+        icon || null, 
+        category_id || null, 
+        sort_order || 0, 
+        status || 'active', 
+        validatedId
+      ]
     );
 
     res.success(null, '网站更新成功');
@@ -266,7 +283,11 @@ router.delete('/:id', authenticateToken, requireEditor, ApiResponse.asyncHandler
   const { id } = req.params;
 
   // 验证ID参数
-  const validatedId = Validator.validateId(id, '网站ID');
+  const idValidation = Validator.validateId(id, '网站ID');
+  if (!idValidation.isValid) {
+    return res.error(idValidation.message, ApiResponse.CODE.VALIDATION_ERROR);
+  }
+  const validatedId = idValidation.id;
 
   // 检查网站是否存在
   const [existingSites] = await pool.execute(
@@ -320,7 +341,11 @@ router.post('/:id/click', ApiResponse.asyncHandler(async (req, res) => {
   const { ip_address, user_agent, referer } = req.body;
 
   // 验证ID参数
-  const validatedId = Validator.validateId(id, '网站ID');
+  const idValidation = Validator.validateId(id, '网站ID');
+  if (!idValidation.isValid) {
+    return res.error(idValidation.message, ApiResponse.CODE.VALIDATION_ERROR);
+  }
+  const validatedId = idValidation.id;
 
   // 检查网站是否存在且激活
   const [sites] = await pool.execute(
@@ -366,8 +391,16 @@ router.get('/:id/stats', authenticateToken, ApiResponse.asyncHandler(async (req,
   const { days = 30 } = req.query;
 
   // 验证ID参数
-  const validatedId = Validator.validateId(id, '网站ID');
-  const validatedDays = Validator.validateId(days, '天数');
+  const idValidation = Validator.validateId(id, '网站ID');
+  if (!idValidation.isValid) {
+    return res.error(idValidation.message, ApiResponse.CODE.VALIDATION_ERROR);
+  }
+  const validatedId = idValidation.id;
+  const daysValidation = Validator.validateId(days, '天数');
+  if (!daysValidation.isValid) {
+    return res.error(daysValidation.message, ApiResponse.CODE.VALIDATION_ERROR);
+  }
+  const validatedDays = daysValidation.id;
 
   // 检查网站是否存在
   const [sites] = await pool.execute(
