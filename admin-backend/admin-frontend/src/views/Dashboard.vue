@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   Link,
@@ -138,6 +138,7 @@ import request from '@/utils/request'
 const loading = ref(true)
 const error = ref('')
 const selectedPeriod = ref('7天')
+const isUnmounted = ref(false)
 
 // 统计数据
 const statsData = ref([
@@ -171,33 +172,8 @@ const statsData = ref([
   }
 ])
 
-// 活动数据
-const activities = ref([
-  {
-    id: 1,
-    title: '新增网站',
-    description: '添加了 "Vue.js 官网" 到前端开发分类',
-    time: new Date(Date.now() - 5 * 60 * 1000),
-    icon: Plus,
-    color: '#52c41a'
-  },
-  {
-    id: 2,
-    title: '编辑分类',
-    description: '更新了 "设计工具" 分类的描述信息',
-    time: new Date(Date.now() - 15 * 60 * 1000),
-    icon: Edit,
-    color: '#1890ff'
-  },
-  {
-    id: 3,
-    title: '删除网站',
-    description: '从数据库分类中删除了过期的网站链接',
-    time: new Date(Date.now() - 30 * 60 * 1000),
-    icon: Delete,
-    color: '#f5222d'
-  }
-])
+// 活动数据 - 初始化为空数组，避免DOM操作冲突
+const activities = ref([])
 
 // 图表配置
 const trendChartOption = computed(() => ({
@@ -292,6 +268,39 @@ const loadDashboardData = async () => {
       stat.change = 0
     })
     
+    // 初始化活动数据，确保在DOM更新后设置
+    setTimeout(() => {
+      // 防止组件卸载后执行
+      if (isUnmounted.value) return
+      
+      activities.value = [
+        {
+          id: 1,
+          title: '新增网站',
+          description: '添加了 "Vue.js 官网" 到前端开发分类',
+          time: new Date(Date.now() - 5 * 60 * 1000),
+          icon: Plus,
+          color: '#52c41a'
+        },
+        {
+          id: 2,
+          title: '编辑分类',
+          description: '更新了 "设计工具" 分类的描述信息',
+          time: new Date(Date.now() - 15 * 60 * 1000),
+          icon: Edit,
+          color: '#1890ff'
+        },
+        {
+          id: 3,
+          title: '删除网站',
+          description: '从数据库分类中删除了过期的网站链接',
+          time: new Date(Date.now() - 30 * 60 * 1000),
+          icon: Delete,
+          color: '#f5222d'
+        }
+      ]
+    }, 100)
+    
     loading.value = false
   } catch (err) {
     loading.value = false
@@ -315,6 +324,10 @@ const refreshActivities = async () => {
 onMounted(() => {
   loadDashboardData()
 })
+
+onUnmounted(() => {
+  isUnmounted.value = true
+})
 </script>
 
 <style scoped>
@@ -322,6 +335,8 @@ onMounted(() => {
   padding: 20px;
   background: #f5f5f5;
   min-height: calc(100vh - 60px);
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
 }
 
 .dashboard-content {
@@ -483,6 +498,9 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 8px;
 }
 
 .activity-item {

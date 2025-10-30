@@ -44,6 +44,8 @@
         :data="sites"
         style="width: 100%"
         row-key="id"
+        height="600"
+        :scrollbar-always-on="true"
       >
         <el-table-column prop="name" label="网站名称" min-width="150">
           <template #default="{ row }">
@@ -426,6 +428,12 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  padding: 16px 0;
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .toolbar-right {

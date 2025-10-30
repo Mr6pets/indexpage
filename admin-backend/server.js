@@ -39,12 +39,16 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// 请求限制
+// 请求限制 - 放宽限制以便开发和测试
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15分钟
-  max: 100, // 限制每个IP 15分钟内最多100个请求
+  windowMs: 1 * 60 * 1000, // 1分钟
+  max: 1000, // 限制每个IP 1分钟内最多1000个请求
   message: {
     error: '请求过于频繁，请稍后再试'
+  },
+  skip: (req) => {
+    // 跳过本地开发环境的限制
+    return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
   }
 });
 app.use('/api/', limiter);

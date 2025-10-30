@@ -44,6 +44,8 @@
         style="width: 100%"
         class="animated-table"
         :row-class-name="getRowClassName"
+        height="600"
+        :scrollbar-always-on="true"
       >
         <el-table-column prop="username" label="用户名" min-width="120" />
         

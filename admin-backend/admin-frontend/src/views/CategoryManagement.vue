@@ -29,13 +29,13 @@
         :data="categories"
         style="width: 100%"
         row-key="id"
+        height="600"
+        :scrollbar-always-on="true"
       >
         <el-table-column prop="name" label="分类名称" min-width="200">
           <template #default="{ row }">
             <div class="category-info">
-              <el-icon v-if="row.icon" class="category-icon">
-                <component :is="row.icon" />
-              </el-icon>
+              <span v-if="row.icon" class="category-icon-emoji">{{ row.icon }}</span>
               <div>
                 <div class="category-name">{{ row.name }}</div>
                 <div class="category-description">{{ row.description }}</div>
@@ -246,12 +246,31 @@ const loadCategories = async () => {
       search: searchQuery.value
     }
     
+    console.log('正在加载分类数据，参数:', params)
     const response = await request.get('/categories', { params })
-    if (response.data.success) {
-      categories.value = response.data.data.categories
-      total.value = response.data.data.total
+    console.log('分类API响应:', response.data)
+    
+    // 处理不同的响应格式
+    let categoriesData, totalData;
+    
+    if (response.data.success && response.data.data) {
+      // 标准格式: {success: true, data: {categories: [...], total: ...}}
+      categoriesData = response.data.data.categories;
+      totalData = response.data.data.total;
+    } else if (response.data.categories) {
+      // 直接格式: {categories: [...], total: ...}
+      categoriesData = response.data.categories;
+      totalData = response.data.total;
+    } else {
+      console.error('未知的API响应格式:', response.data);
+      return;
     }
+    
+    categories.value = categoriesData;
+    total.value = totalData;
+    console.log('分类数据加载成功:', categories.value.length, '个分类');
   } catch (error) {
+    console.error('加载分类列表失败:', error)
     ElMessage.error('加载分类列表失败')
   } finally {
     loading.value = false
@@ -418,6 +437,12 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  padding: 16px 0;
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .toolbar-right {
@@ -434,6 +459,14 @@ onMounted(() => {
   margin-right: 8px;
   font-size: 18px;
   color: #409EFF;
+}
+
+.category-icon-emoji {
+  display: inline-block;
+  margin-right: 12px;
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
 }
 
 .category-name {

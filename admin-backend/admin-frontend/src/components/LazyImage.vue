@@ -126,7 +126,7 @@ const loadImage = async () => {
       }, props.fadeDuration)
     }
   } catch (err) {
-    console.error('图片加载失败:', err)
+    // 静默处理图片加载失败，避免控制台错误
     loading.value = false
     error.value = true
   }

@@ -357,11 +357,28 @@ let realtimeTimer: NodeJS.Timeout | null = null
 // 方法
 const loadOverviewStats = async () => {
   try {
+    console.log('正在加载概览统计数据')
     const response = await request.get('/stats/overview')
-    if (response.data.success) {
-      Object.assign(overviewStats, response.data.data)
+    console.log('概览统计API响应:', response.data)
+    
+    // 处理不同的响应格式
+    let overviewData;
+    
+    if (response.data.success && response.data.data) {
+      // 标准格式: {success: true, data: {...}}
+      overviewData = response.data.data;
+    } else if (response.data.overview) {
+      // 直接格式: {overview: {...}}
+      overviewData = response.data.overview;
+    } else {
+      console.error('未知的概览统计API响应格式:', response.data);
+      return;
     }
+    
+    Object.assign(overviewStats, overviewData);
+    console.log('概览统计数据加载成功:', overviewStats);
   } catch (error) {
+    console.error('加载概览统计失败:', error)
     ElMessage.error('加载概览统计失败')
   }
 }
@@ -369,16 +386,31 @@ const loadOverviewStats = async () => {
 const loadTrendData = async () => {
   trendLoading.value = true
   try {
+    console.log('正在加载访问趋势数据，周期:', trendPeriod.value)
     const response = await request.get('/stats/trends', {
       params: { days: trendPeriod.value }
     })
+    console.log('访问趋势API响应:', response.data)
     
-    if (response.data.success) {
-      const data = response.data.data
-      trendChartOption.value.xAxis.data = data.dates
-      trendChartOption.value.series[0].data = data.visits
+    // 处理不同的响应格式
+    let trendData;
+    
+    if (response.data.success && response.data.data) {
+      // 标准格式: {success: true, data: {...}}
+      trendData = response.data.data;
+    } else if (response.data.dates && response.data.visits) {
+      // 直接格式: {dates: [...], visits: [...]}
+      trendData = response.data;
+    } else {
+      console.error('未知的访问趋势API响应格式:', response.data);
+      return;
     }
+    
+    trendChartOption.value.xAxis.data = trendData.dates;
+    trendChartOption.value.series[0].data = trendData.visits;
+    console.log('访问趋势数据加载成功');
   } catch (error) {
+    console.error('加载访问趋势失败:', error)
     ElMessage.error('加载访问趋势失败')
   } finally {
     trendLoading.value = false
@@ -388,11 +420,28 @@ const loadTrendData = async () => {
 const loadCategoryData = async () => {
   categoryLoading.value = true
   try {
+    console.log('正在加载分类统计数据')
     const response = await request.get('/stats/categories')
-    if (response.data.success) {
-      categoryChartOption.value.series[0].data = response.data.data
+    console.log('分类统计API响应:', response.data)
+    
+    // 处理不同的响应格式
+    let categoryData;
+    
+    if (response.data.success && response.data.data) {
+      // 标准格式: {success: true, data: [...]}
+      categoryData = response.data.data;
+    } else if (Array.isArray(response.data)) {
+      // 直接格式: [...]
+      categoryData = response.data;
+    } else {
+      console.error('未知的分类统计API响应格式:', response.data);
+      return;
     }
+    
+    categoryChartOption.value.series[0].data = categoryData;
+    console.log('分类统计数据加载成功');
   } catch (error) {
+    console.error('加载分类统计失败:', error)
     ElMessage.error('加载分类统计失败')
   } finally {
     categoryLoading.value = false
@@ -402,14 +451,30 @@ const loadCategoryData = async () => {
 const loadRankingData = async () => {
   rankingLoading.value = true
   try {
+    console.log('正在加载排行数据，类型:', rankingType.value)
     const response = await request.get('/stats/ranking', {
       params: { type: rankingType.value, limit: 10 }
     })
+    console.log('排行数据API响应:', response.data)
     
-    if (response.data.success) {
-      topSites.value = response.data.data
+    // 处理不同的响应格式
+    let rankingData;
+    
+    if (response.data.success && response.data.data) {
+      // 标准格式: {success: true, data: [...]}
+      rankingData = response.data.data;
+    } else if (Array.isArray(response.data)) {
+      // 直接格式: [...]
+      rankingData = response.data;
+    } else {
+      console.error('未知的排行数据API响应格式:', response.data);
+      return;
     }
+    
+    topSites.value = rankingData;
+    console.log('排行数据加载成功:', topSites.value.length, '个网站');
   } catch (error) {
+    console.error('加载排行数据失败:', error)
     ElMessage.error('加载排行数据失败')
   } finally {
     rankingLoading.value = false
@@ -419,18 +484,34 @@ const loadRankingData = async () => {
 const loadBehaviorData = async () => {
   behaviorLoading.value = true
   try {
+    console.log('正在加载用户行为数据')
     const response = await request.get('/stats/behavior')
-    if (response.data.success) {
-      const data = response.data.data
-      Object.assign(behaviorStats, {
-        uniqueVisitors: data.uniqueVisitors,
-        avgSessionTime: data.avgSessionTime,
-        bounceRate: data.bounceRate
-      })
-      
-      browserChartOption.value.series[0].data = data.browsers
+    console.log('用户行为API响应:', response.data)
+    
+    // 处理不同的响应格式
+    let behaviorData;
+    
+    if (response.data.success && response.data.data) {
+      // 标准格式: {success: true, data: {...}}
+      behaviorData = response.data.data;
+    } else if (response.data.uniqueVisitors !== undefined) {
+      // 直接格式: {uniqueVisitors: ..., avgSessionTime: ..., ...}
+      behaviorData = response.data;
+    } else {
+      console.error('未知的用户行为API响应格式:', response.data);
+      return;
     }
+    
+    Object.assign(behaviorStats, {
+      uniqueVisitors: behaviorData.uniqueVisitors,
+      avgSessionTime: behaviorData.avgSessionTime,
+      bounceRate: behaviorData.bounceRate
+    });
+    
+    browserChartOption.value.series[0].data = behaviorData.browsers;
+    console.log('用户行为数据加载成功');
   } catch (error) {
+    console.error('加载用户行为数据失败:', error)
     ElMessage.error('加载用户行为数据失败')
   } finally {
     behaviorLoading.value = false
@@ -440,11 +521,28 @@ const loadBehaviorData = async () => {
 const loadRealtimeData = async () => {
   realtimeLoading.value = true
   try {
+    console.log('正在加载实时数据')
     const response = await request.get('/stats/realtime')
-    if (response.data.success) {
-      Object.assign(realtimeStats, response.data.data)
+    console.log('实时数据API响应:', response.data)
+    
+    // 处理不同的响应格式
+    let realtimeData;
+    
+    if (response.data.success && response.data.data) {
+      // 标准格式: {success: true, data: {...}}
+      realtimeData = response.data.data;
+    } else if (response.data.last5MinVisits !== undefined) {
+      // 直接格式: {last5MinVisits: ..., onlineUsers: ..., ...}
+      realtimeData = response.data;
+    } else {
+      console.error('未知的实时数据API响应格式:', response.data);
+      return;
     }
+    
+    Object.assign(realtimeStats, realtimeData);
+    console.log('实时数据加载成功');
   } catch (error) {
+    console.error('加载实时数据失败:', error)
     ElMessage.error('加载实时数据失败')
   } finally {
     realtimeLoading.value = false
@@ -482,7 +580,11 @@ onUnmounted(() => {
 
 <style scoped>
 .statistics {
-  padding: 0;
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: calc(100vh - 60px);
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
 }
 
 .stats-cards {
@@ -567,8 +669,7 @@ onUnmounted(() => {
 }
 
 .ranking-list {
-  max-height: 300px;
-  overflow-y: auto;
+  /* 移除max-height限制，让VirtualScroll组件控制高度 */
 }
 
 .ranking-item {
