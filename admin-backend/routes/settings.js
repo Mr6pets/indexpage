@@ -2,6 +2,8 @@ const express = require('express');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const ApiResponse = require('../utils/response');
 const Validator = require('../utils/validator');
+const fs = require('fs').promises;
+const path = require('path');
 
 // 使用MySQL数据库
 let database;
@@ -66,6 +68,147 @@ router.get('/', authenticateToken, ApiResponse.asyncHandler(async (req, res) => 
   });
 
   res.success(settingsMap, '获取设置成功');
+}));
+
+// ==================== 备份管理 API ====================
+
+// 获取备份列表
+router.get('/backups', authenticateToken, requireAdmin, ApiResponse.asyncHandler(async (req, res) => {
+  const backupsDir = path.join(__dirname, '../backups');
+  
+  try {
+    // 确保备份目录存在
+    await fs.mkdir(backupsDir, { recursive: true });
+    
+    // 读取备份目录中的文件
+    const files = await fs.readdir(backupsDir);
+    const backupFiles = files.filter(file => file.endsWith('.sql'));
+    
+    // 获取文件详细信息
+    const backups = await Promise.all(
+      backupFiles.map(async (file) => {
+        const filePath = path.join(backupsDir, file);
+        const stats = await fs.stat(filePath);
+        
+        return {
+          id: file.replace('.sql', ''),
+          name: file,
+          size: stats.size,
+          created_at: stats.birthtime,
+          modified_at: stats.mtime
+        };
+      })
+    );
+    
+    // 按创建时间倒序排列
+    backups.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    res.success(backups, '获取备份列表成功');
+  } catch (error) {
+    console.error('获取备份列表失败:', error);
+    res.error('获取备份列表失败', ApiResponse.CODE.INTERNAL_ERROR);
+  }
+}));
+
+// 创建备份
+router.post('/backup', authenticateToken, requireAdmin, ApiResponse.asyncHandler(async (req, res) => {
+  const backupsDir = path.join(__dirname, '../backups');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupFileName = `backup_${timestamp}.sql`;
+  const backupPath = path.join(backupsDir, backupFileName);
+  
+  try {
+    // 确保备份目录存在
+    await fs.mkdir(backupsDir, { recursive: true });
+    
+    if (settingOperations) {
+      // 模拟数据库备份
+      const mockData = {
+        settings: settingOperations.getAll(),
+        timestamp: new Date().toISOString(),
+        version: '1.0'
+      };
+      
+      await fs.writeFile(backupPath, JSON.stringify(mockData, null, 2));
+    } else {
+      // MySQL数据库备份
+      const [settings] = await pool.execute('SELECT * FROM settings');
+      const [categories] = await pool.execute('SELECT * FROM categories');
+      const [sites] = await pool.execute('SELECT * FROM sites');
+      const [users] = await pool.execute('SELECT * FROM users');
+      
+      const backupData = {
+        settings,
+        categories,
+        sites,
+        users: users.map(user => ({ ...user, password: '[HIDDEN]' })), // 隐藏密码
+        timestamp: new Date().toISOString(),
+        version: '1.0'
+      };
+      
+      await fs.writeFile(backupPath, JSON.stringify(backupData, null, 2));
+    }
+    
+    res.success({
+      id: backupFileName.replace('.sql', ''),
+      name: backupFileName,
+      path: backupPath
+    }, '备份创建成功');
+    
+  } catch (error) {
+    console.error('创建备份失败:', error);
+    res.error('创建备份失败', ApiResponse.CODE.INTERNAL_ERROR);
+  }
+}));
+
+// 删除备份
+router.delete('/backup/:id', authenticateToken, requireAdmin, ApiResponse.asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const backupsDir = path.join(__dirname, '../backups');
+  const backupPath = path.join(backupsDir, `${id}.sql`);
+  
+  try {
+    // 检查文件是否存在
+    await fs.access(backupPath);
+    
+    // 删除文件
+    await fs.unlink(backupPath);
+    
+    res.success(null, '备份删除成功');
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.error('备份文件不存在', ApiResponse.CODE.NOT_FOUND);
+    } else {
+      console.error('删除备份失败:', error);
+      res.error('删除备份失败', ApiResponse.CODE.INTERNAL_ERROR);
+    }
+  }
+}));
+
+// 下载备份
+router.get('/backup/:id/download', authenticateToken, requireAdmin, ApiResponse.asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const backupsDir = path.join(__dirname, '../backups');
+  const backupPath = path.join(backupsDir, `${id}.sql`);
+  
+  try {
+    // 检查文件是否存在
+    await fs.access(backupPath);
+    
+    // 设置下载头
+    res.setHeader('Content-Disposition', `attachment; filename="${id}.sql"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    
+    // 发送文件
+    res.sendFile(backupPath);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.error('备份文件不存在', ApiResponse.CODE.NOT_FOUND);
+    } else {
+      console.error('下载备份失败:', error);
+      res.error('下载备份失败', ApiResponse.CODE.INTERNAL_ERROR);
+    }
+  }
 }));
 
 // 获取单个设置

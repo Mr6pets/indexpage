@@ -359,29 +359,23 @@ const loadOverviewStats = async () => {
   try {
     console.log('正在加载概览统计数据')
     const response = await request.get('/stats/overview')
-    console.log('概览统计API响应:', response.data)
+    console.log('概览统计API响应:', response)
     
-    // 处理不同的响应格式
+    // 处理统一的响应格式
     let overviewData;
     
     if (response.success && response.data && response.data.overview) {
       // 标准格式: {success: true, data: {overview: {...}}}
+      const overview = response.data.overview;
       overviewData = {
-        totalSites: response.data.overview.total_sites,
-        totalCategories: response.data.overview.total_categories,
-        totalUsers: response.data.overview.total_users,
-        totalClicks: response.data.overview.total_clicks
-      };
-    } else if (response.overview) {
-      // 直接格式: {overview: {...}}
-      overviewData = {
-        totalSites: response.overview.total_sites,
-        totalCategories: response.overview.total_categories,
-        totalUsers: response.overview.total_users,
-        totalClicks: response.overview.total_clicks
+        totalSites: overview.total_sites,
+        totalCategories: overview.total_categories,
+        totalUsers: overview.total_users,
+        totalClicks: overview.total_clicks
       };
     } else {
-      console.error('未知的概览统计API响应格式:', response);
+      console.error('概览统计API响应格式错误:', response);
+      ElMessage.error('概览统计数据格式错误');
       return;
     }
     
@@ -400,7 +394,7 @@ const loadTrendData = async () => {
     const response = await request.get('/stats/trends', {
       params: { days: trendPeriod.value }
     })
-    console.log('访问趋势API响应:', response.data)
+    console.log('访问趋势API响应:', response)
     
     // 处理统一的响应格式
     let trendData;
@@ -436,7 +430,7 @@ const loadCategoryData = async () => {
   try {
     console.log('正在加载分类统计数据')
     const response = await request.get('/stats/categories')
-    console.log('分类统计API响应:', response.data)
+    console.log('分类统计API响应:', response)
     
     // 处理统一的响应格式
     let categoryData;
@@ -467,7 +461,7 @@ const loadRankingData = async () => {
     const response = await request.get('/stats/ranking', {
       params: { type: rankingType.value, limit: 10 }
     })
-    console.log('排行数据API响应:', response.data)
+    console.log('排行数据API响应:', response)
     
     // 处理统一的响应格式
     let rankingData;
@@ -496,7 +490,7 @@ const loadBehaviorData = async () => {
   try {
     console.log('正在加载用户行为数据')
     const response = await request.get('/stats/behavior')
-    console.log('用户行为API响应:', response.data)
+    console.log('用户行为API响应:', response)
     
     // 处理统一的响应格式
     let behaviorData;
@@ -531,31 +525,22 @@ const loadRealtimeData = async () => {
   try {
     console.log('正在加载实时数据')
     const response = await request.get('/stats/realtime')
-    console.log('实时数据API响应:', response.data)
+    console.log('实时数据API响应:', response)
     
-    // 处理不同的响应格式
+    // 处理统一的响应格式
     let realtimeData;
     
-    if (response.data.success && response.data.data) {
-      // 标准格式: {success: true, data: {...}}
-      const data = response.data.data;
+    if (response.success && response.data) {
+      // 标准格式: {success: true, data: {recent_visits: ..., online_users: ..., recent_sites: ...}}
+      const data = response.data;
       realtimeData = {
         last5MinVisits: data.recent_visits || 0,
         onlineUsers: data.online_users || 0,
         recentSites: data.recent_sites || []
       };
-    } else if (response.data.last5MinVisits !== undefined) {
-      // 直接格式: {last5MinVisits: ..., onlineUsers: ..., ...}
-      realtimeData = response.data;
-    } else if (response.data.recent_visits !== undefined) {
-      // 新格式: {recent_visits: ..., online_users: ..., recent_sites: ...}
-      realtimeData = {
-        last5MinVisits: response.data.recent_visits,
-        onlineUsers: response.data.online_users,
-        recentSites: response.data.recent_sites || []
-      };
     } else {
-      console.error('未知的实时数据API响应格式:', response.data);
+      console.error('实时数据API响应格式错误:', response);
+      ElMessage.error('实时数据格式错误');
       return;
     }
     

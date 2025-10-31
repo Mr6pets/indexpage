@@ -2,6 +2,7 @@ const express = require('express');
 const { authenticateToken, requireEditor } = require('../middleware/auth');
 const ApiResponse = require('../utils/response');
 const Validator = require('../utils/validator');
+const { logActivity, logVisit } = require('../utils/activity-logger');
 
 // 使用MySQL数据库
 let database;
@@ -139,7 +140,7 @@ router.get('/:id', ApiResponse.asyncHandler(async (req, res) => {
 
 // 创建网站
 router.post('/', authenticateToken, requireEditor, ApiResponse.asyncHandler(async (req, res) => {
-  const { name, url, description, icon, category_id, sort_order = 0, status = 'active' } = req.body;
+  const { name, url, description, icon = null, category_id = null, sort_order = 0, status = 'active' } = req.body;
 
   // 验证必填字段
   Validator.validateRequired({ name, url }, ['name', 'url']);
@@ -165,8 +166,20 @@ router.post('/', authenticateToken, requireEditor, ApiResponse.asyncHandler(asyn
 
   const [result] = await pool.execute(
     'INSERT INTO sites (name, url, description, icon, category_id, sort_order, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [name, url, description, icon, category_id, sort_order, status]
+    [name, url, description || null, icon, category_id, sort_order, status]
   );
+
+  // 记录活动日志
+  await logActivity({
+    userId: req.user.id,
+    actionType: 'create',
+    targetType: 'site',
+    targetId: result.insertId,
+    title: '新增网站',
+    description: `添加了 "${name}" 到网站列表`,
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent')
+  });
 
   res.success({
     id: result.insertId,
@@ -274,6 +287,18 @@ router.put('/:id', authenticateToken, requireEditor, ApiResponse.asyncHandler(as
       ]
     );
 
+    // 记录活动日志
+    await logActivity({
+      userId: req.user.id,
+      actionType: 'update',
+      targetType: 'site',
+      targetId: validatedId,
+      title: '编辑网站',
+      description: `更新了网站 "${name}" 的信息`,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
     res.success(null, '网站更新成功');
   }
 }));
@@ -291,7 +316,7 @@ router.delete('/:id', authenticateToken, requireEditor, ApiResponse.asyncHandler
 
   // 检查网站是否存在
   const [existingSites] = await pool.execute(
-    'SELECT id FROM sites WHERE id = ?',
+    'SELECT id, name FROM sites WHERE id = ?',
     [validatedId]
   );
 
@@ -299,7 +324,21 @@ router.delete('/:id', authenticateToken, requireEditor, ApiResponse.asyncHandler
     return res.error('网站不存在', ApiResponse.CODE.NOT_FOUND);
   }
 
+  const siteName = existingSites[0].name;
+
   await pool.execute('DELETE FROM sites WHERE id = ?', [validatedId]);
+
+  // 记录活动日志
+  await logActivity({
+    userId: req.user.id,
+    actionType: 'delete',
+    targetType: 'site',
+    targetId: validatedId,
+    title: '删除网站',
+    description: `删除了网站 "${siteName}"`,
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent')
+  });
 
   res.success(null, '网站删除成功');
 }));
@@ -361,17 +400,26 @@ router.post('/:id/click', ApiResponse.asyncHandler(async (req, res) => {
   await connection.beginTransaction();
 
   try {
+    // 获取网站信息（包括分类）
+    const [siteInfo] = await connection.execute(
+      'SELECT s.id, s.name, s.category_id, c.name as category_name FROM sites s LEFT JOIN categories c ON s.category_id = c.id WHERE s.id = ?',
+      [validatedId]
+    );
+
     // 更新点击次数
     await connection.execute(
       'UPDATE sites SET click_count = click_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [validatedId]
     );
 
-    // 记录访问日志
-    await connection.execute(
-      'INSERT INTO access_logs (site_id, ip_address, user_agent, referer) VALUES (?, ?, ?, ?)',
-      [validatedId, ip_address, user_agent, referer]
-    );
+    // 使用logVisit函数记录访问数据
+    await logVisit({
+      siteId: validatedId,
+      categoryId: siteInfo[0].category_id,
+      ipAddress: ip_address || req.ip,
+      userAgent: user_agent || req.get('User-Agent'),
+      referer: referer
+    });
 
     await connection.commit();
     connection.release();

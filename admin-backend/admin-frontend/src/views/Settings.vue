@@ -486,8 +486,8 @@ const loadSettings = async () => {
   loading.value = true
   try {
     const response = await request.get('/settings')
-    if (response.data.success) {
-      const settings = response.data.data
+    if (response.success) {
+      const settings = response.data
       
       // 基础设置
       Object.assign(basicForm, {
@@ -541,7 +541,7 @@ const saveBasicSettings = async () => {
     basicSubmitting.value = true
     
     const response = await request.put('/settings/batch', basicForm)
-    if (response.data.success) {
+    if (response.success) {
       ElMessage.success('基础设置保存成功')
     }
   } catch (error) {
@@ -555,7 +555,7 @@ const saveDisplaySettings = async () => {
   try {
     displaySubmitting.value = true
     const response = await request.put('/settings/batch', displayForm)
-    if (response.data.success) {
+    if (response.success) {
       ElMessage.success('显示设置保存成功')
     }
   } catch (error) {
@@ -569,7 +569,7 @@ const saveSecuritySettings = async () => {
   try {
     securitySubmitting.value = true
     const response = await request.put('/settings/batch', securityForm)
-    if (response.data.success) {
+    if (response.success) {
       ElMessage.success('安全设置保存成功')
     }
   } catch (error) {
@@ -583,7 +583,7 @@ const saveEmailSettings = async () => {
   try {
     emailSubmitting.value = true
     const response = await request.put('/settings/batch', emailForm)
-    if (response.data.success) {
+    if (response.success) {
       ElMessage.success('邮件设置保存成功')
     }
   } catch (error) {
@@ -597,7 +597,7 @@ const testEmailSettings = async () => {
   try {
     emailTesting.value = true
     const response = await request.post('/settings/test-email')
-    if (response.data.success) {
+    if (response.success) {
       ElMessage.success('测试邮件发送成功')
     }
   } catch (error) {
@@ -641,7 +641,7 @@ const testEmail = async () => {
   try {
     emailTesting.value = true
     const response = await request.post('/settings/test-email', emailForm)
-    if (response.data.success) {
+    if (response.success) {
       ElMessage.success('测试邮件发送成功')
     }
   } catch (error) {
@@ -663,8 +663,8 @@ const uploadLogo = async (options: any) => {
       }
     })
     
-    if (response.data.success) {
-      basicForm.site_logo = response.data.data.url
+    if (response.success) {
+      basicForm.site_logo = response.data.url
       ElMessage.success('Logo上传成功')
     }
   } catch (error) {
@@ -686,8 +686,8 @@ const handleFaviconUpload: UploadProps['customRequest'] = async (options) => {
       }
     })
     
-    if (response.data.success) {
-      basicForm.site_favicon = response.data.data.url
+    if (response.success) {
+      basicForm.site_favicon = response.data.url
       ElMessage.success('Favicon上传成功')
     }
   } catch (error) {
@@ -701,8 +701,8 @@ const loadBackups = async () => {
   try {
     backupLoading.value = true
     const response = await request.get('/settings/backups')
-    if (response.data.success) {
-      backups.value = response.data.data
+    if (response.success) {
+      backups.value = response.data
     }
   } catch (error) {
     ElMessage.error('加载备份列表失败')
@@ -715,7 +715,7 @@ const createBackup = async () => {
   try {
     backupCreating.value = true
     const response = await request.post('/settings/backup')
-    if (response.data.success) {
+    if (response.success) {
       ElMessage.success('备份创建成功')
       loadBackups()
     }
@@ -735,7 +735,7 @@ const deleteBackup = async (backup: any) => {
     )
     
     const response = await request.delete(`/settings/backup/${backup.id}`)
-    if (response.data.success) {
+    if (response.success) {
       ElMessage.success('删除成功')
       loadBackups()
     }
@@ -777,7 +777,7 @@ const handleRestoreUpload: UploadProps['customRequest'] = async (options) => {
       }
     })
     
-    if (response.data.success) {
+    if (response.success) {
       ElMessage.success('数据恢复成功，请刷新页面')
       setTimeout(() => {
         window.location.reload()

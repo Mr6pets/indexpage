@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, markRaw } from 'vue'
+import { ref, computed, onMounted, onUnmounted, markRaw, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   Link,
@@ -196,36 +196,26 @@ const statsData = ref([
 // 活动数据 - 初始化为空数组，避免DOM操作冲突
 const activities = ref([])
 
-// 图表配置
-const trendChartOption = computed(() => ({
-  tooltip: {
-    trigger: 'axis'
-  },
-  xAxis: {
-    type: 'category',
+// 趋势图表配置
+const trendChartOption = ref({
+  tooltip: { trigger: 'axis' },
+  xAxis: { 
+    type: 'category', 
     data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
   },
-  yAxis: {
-    type: 'value'
-  },
+  yAxis: { type: 'value' },
   series: [{
-    data: [120, 200, 150, 80, 70, 110, 130],
+    data: [120, 132, 101, 134, 90, 230, 210],
     type: 'line',
     smooth: true,
-    itemStyle: {
-      color: '#409EFF'
-    }
+    itemStyle: { color: '#409EFF' }
   }]
-}))
+})
 
-const categoryChartOption = computed(() => ({
-  tooltip: {
-    trigger: 'item'
-  },
-  legend: {
-    orient: 'vertical',
-    left: 'left'
-  },
+// 分类图表配置
+const categoryChartOption = ref({
+  tooltip: { trigger: 'item' },
+  legend: { orient: 'vertical', left: 'left' },
   series: [{
     type: 'pie',
     radius: '50%',
@@ -233,7 +223,7 @@ const categoryChartOption = computed(() => ({
       { value: 1048, name: '前端开发' },
       { value: 735, name: '后端开发' },
       { value: 580, name: '设计工具' },
-      { value: 484, name: '开发工具' },
+      { value: 484, name: '数据库' },
       { value: 300, name: '其他' }
     ],
     emphasis: {
@@ -244,7 +234,84 @@ const categoryChartOption = computed(() => ({
       }
     }
   }]
-}))
+})
+
+// 获取天数映射
+const getDaysFromPeriod = (period: string): number => {
+  switch (period) {
+    case '7天':
+      return 7
+    case '30天':
+      return 30
+    case '90天':
+      return 90
+    default:
+      return 7
+  }
+}
+
+// 加载趋势数据
+const loadTrendData = async (period?: string) => {
+  try {
+    const days = getDaysFromPeriod(period || selectedPeriod.value)
+    const trendsResponse = await request.get(`/stats/trends?days=${days}`)
+    
+    if (trendsResponse.success && trendsResponse.data) {
+      const trendsData = trendsResponse.data
+      
+      // 更新访问趋势图表
+      if (trendsData.daily_trends && trendsData.daily_trends.length > 0) {
+        const dates = trendsData.daily_trends.map(item => {
+          const date = new Date(item.date)
+          return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+        })
+        const visits = trendsData.daily_trends.map(item => item.visits)
+        
+        // 更新趋势图表数据
+        trendChartOption.value = {
+          tooltip: { trigger: 'axis' },
+          xAxis: { type: 'category', data: dates },
+          yAxis: { type: 'value' },
+          series: [{
+            data: visits,
+            type: 'line',
+            smooth: true,
+            itemStyle: { color: '#409EFF' }
+          }]
+        }
+      }
+      
+      // 更新分类统计图表
+      if (trendsData.category_stats && trendsData.category_stats.length > 0) {
+        const categoryData = trendsData.category_stats.map(item => ({
+          value: item.total_clicks || item.visits || 0,
+          name: item.category_name
+        }))
+        
+        // 更新分类图表数据
+        categoryChartOption.value = {
+          tooltip: { trigger: 'item' },
+          legend: { orient: 'vertical', left: 'left' },
+          series: [{
+            type: 'pie',
+            radius: '50%',
+            data: categoryData,
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }]
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Load trend data error:', err)
+    ElMessage.error('趋势数据加载失败')
+  }
+}
 
 // 加载仪表板数据
 const loadDashboardData = async () => {
@@ -252,21 +319,22 @@ const loadDashboardData = async () => {
     loading.value = true
     error.value = ''
     
-    // 获取统计数据
-    const response = await request.get('/stats/overview')
-    console.log('仪表盘API响应:', response)
+    // 并行获取概览数据和活动数据，趋势数据单独加载
+    const [overviewResponse, activitiesResponse] = await Promise.all([
+      request.get('/stats/overview'),
+      request.get('/stats/activities?limit=10')
+    ])
     
-    // 处理统一的响应格式
+    console.log('仪表盘API响应:', { overviewResponse, activitiesResponse })
+    
+    // 处理统计数据
     let overviewData;
-    
-    if (response.success && response.data && response.data.overview) {
-      // 标准格式: {success: true, data: {overview: {...}}}
-      overviewData = response.data.overview;
-    } else if (response.data && response.data.total_sites !== undefined) {
-      // 直接格式: {success: true, data: {total_sites: ...}}
-      overviewData = response.data;
+    if (overviewResponse.success && overviewResponse.data && overviewResponse.data.overview) {
+      overviewData = overviewResponse.data.overview;
+    } else if (overviewResponse.data && overviewResponse.data.total_sites !== undefined) {
+      overviewData = overviewResponse.data;
     } else {
-      console.error('仪表盘API响应格式错误:', response);
+      console.error('仪表盘API响应格式错误:', overviewResponse);
       ElMessage.error('仪表盘数据格式错误');
       return;
     }
@@ -284,22 +352,29 @@ const loadDashboardData = async () => {
       clicks: statsData.value[3].value
     })
     
-    // 可以根据需要计算变化百分比
-    // 这里暂时设为0，后续可以添加历史数据对比
-    statsData.value.forEach(stat => {
-      stat.change = 0
-    })
+    // 加载趋势数据
+    await loadTrendData()
     
-    // 初始化活动数据，确保在DOM更新后设置
-    setTimeout(() => {
-      // 防止组件卸载后执行
-      if (isUnmounted.value) return
+    // 处理活动数据
+    if (activitiesResponse.success && activitiesResponse.data && activitiesResponse.data.activities) {
+      const activitiesData = activitiesResponse.data.activities
       
+      // 将活动数据转换为前端格式
+      activities.value = activitiesData.map(activity => ({
+        id: activity.id,
+        title: activity.title,
+        description: activity.description,
+        time: new Date(activity.created_at),
+        icon: markRaw(getActivityIcon(activity.action_type)),
+        color: getActivityColor(activity.action_type)
+      }))
+    } else {
+      // 如果没有活动数据，使用默认数据
       activities.value = [
         {
           id: 1,
           title: '新增网站',
-          description: '添加了 "Vue.js 官网" 到前端开发分类',
+          description: '添加了新的网站到导航',
           time: new Date(Date.now() - 5 * 60 * 1000),
           icon: markRaw(Plus),
           color: '#52c41a'
@@ -307,7 +382,7 @@ const loadDashboardData = async () => {
         {
           id: 2,
           title: '编辑分类',
-          description: '更新了 "设计工具" 分类的描述信息',
+          description: '更新了分类信息',
           time: new Date(Date.now() - 15 * 60 * 1000),
           icon: markRaw(Edit),
           color: '#1890ff'
@@ -315,13 +390,19 @@ const loadDashboardData = async () => {
         {
           id: 3,
           title: '删除网站',
-          description: '从数据库分类中删除了过期的网站链接',
+          description: '删除了过期的网站链接',
           time: new Date(Date.now() - 30 * 60 * 1000),
           icon: markRaw(Delete),
           color: '#f5222d'
         }
       ]
-    }, 100)
+    }
+    
+    // 可以根据需要计算变化百分比
+    // 这里暂时设为0，后续可以添加历史数据对比
+    statsData.value.forEach(stat => {
+      stat.change = 0
+    })
     
     loading.value = false
   } catch (err) {
@@ -332,15 +413,66 @@ const loadDashboardData = async () => {
   }
 }
 
+// 获取活动图标
+const getActivityIcon = (actionType) => {
+  switch (actionType) {
+    case 'create':
+      return Plus
+    case 'update':
+      return Edit
+    case 'delete':
+      return Delete
+    default:
+      return Edit
+  }
+}
+
+// 获取活动颜色
+const getActivityColor = (actionType) => {
+  switch (actionType) {
+    case 'create':
+      return '#52c41a'
+    case 'update':
+      return '#1890ff'
+    case 'delete':
+      return '#f5222d'
+    default:
+      return '#1890ff'
+  }
+}
+
 // 刷新活动
 const refreshActivities = async () => {
   try {
-    // 模拟刷新
-    ElMessage.success('活动数据已刷新')
+    const response = await request.get('/stats/activities?limit=10')
+    
+    if (response.success && response.data && response.data.activities) {
+      const activitiesData = response.data.activities
+      
+      activities.value = activitiesData.map(activity => ({
+        id: activity.id,
+        title: activity.title,
+        description: activity.description,
+        time: new Date(activity.created_at),
+        icon: markRaw(getActivityIcon(activity.action_type)),
+        color: getActivityColor(activity.action_type)
+      }))
+      
+      ElMessage.success('活动数据已刷新')
+    } else {
+      ElMessage.success('活动数据已刷新')
+    }
   } catch (err) {
     ElMessage.error('刷新失败')
+    console.error('Refresh activities error:', err)
   }
 }
+
+// 监听selectedPeriod变化
+watch(selectedPeriod, (newPeriod) => {
+  console.log('时间范围切换到:', newPeriod)
+  loadTrendData(newPeriod)
+})
 
 // 生命周期
 onMounted(() => {

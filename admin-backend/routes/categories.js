@@ -2,6 +2,7 @@ const express = require('express');
 const { authenticateToken, requireEditor } = require('../middleware/auth');
 const ApiResponse = require('../utils/response');
 const Validator = require('../utils/validator');
+const { logActivity } = require('../utils/activity-logger');
 
 // 使用MySQL数据库
 let database;
@@ -163,6 +164,18 @@ router.post('/', authenticateToken, requireEditor, async (req, res) => {
       [name, icon, description, sort_order, status]
     );
 
+    // 记录活动日志
+    await logActivity({
+      userId: req.user.id,
+      actionType: 'create',
+      targetType: 'category',
+      targetId: result.insertId,
+      title: '新增分类',
+      description: `创建了分类 "${name}"`,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
     res.status(201).json({
       success: true,
       message: '分类创建成功',
@@ -229,6 +242,18 @@ router.put('/:id', authenticateToken, requireEditor, async (req, res) => {
       [name, icon, description, sort_order, status, id]
     );
 
+    // 记录活动日志
+    await logActivity({
+      userId: req.user.id,
+      actionType: 'update',
+      targetType: 'category',
+      targetId: id,
+      title: '编辑分类',
+      description: `更新了分类 "${name}" 的信息`,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
     res.json({
       success: true,
       message: '分类更新成功'
@@ -250,7 +275,7 @@ router.delete('/:id', authenticateToken, requireEditor, async (req, res) => {
 
     // 检查分类是否存在
     const [existingCategories] = await pool.execute(
-      'SELECT id FROM categories WHERE id = ?',
+      'SELECT id, name FROM categories WHERE id = ?',
       [id]
     );
 
@@ -260,6 +285,8 @@ router.delete('/:id', authenticateToken, requireEditor, async (req, res) => {
         message: '分类不存在'
       });
     }
+
+    const categoryName = existingCategories[0].name;
 
     // 检查分类下是否有网站
     const [sites] = await pool.execute(
@@ -275,6 +302,18 @@ router.delete('/:id', authenticateToken, requireEditor, async (req, res) => {
     }
 
     await pool.execute('DELETE FROM categories WHERE id = ?', [id]);
+
+    // 记录活动日志
+    await logActivity({
+      userId: req.user.id,
+      actionType: 'delete',
+      targetType: 'category',
+      targetId: id,
+      title: '删除分类',
+      description: `删除了分类 "${categoryName}"`,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
 
     res.json({
       success: true,
