@@ -165,9 +165,9 @@ router.get('/trends', authenticateToken, ApiResponse.asyncHandler(async (req, re
       `SELECT 
          c.name as category_name,
          c.icon as category_icon,
-         COALESCE(cs.click_count, 0) as visits,
-         COALESCE(cs.click_count, 0) as total_clicks,
-         COALESCE(cs.unique_visitors, 0) as unique_visitors
+         COALESCE(SUM(cs.click_count), 0) as visits,
+         COALESCE(SUM(cs.click_count), 0) as total_clicks,
+         COALESCE(SUM(cs.unique_visitors), 0) as unique_visitors
        FROM categories c
        LEFT JOIN category_stats cs ON c.id = cs.category_id 
          AND cs.date_key >= DATE_SUB(CURDATE(), INTERVAL ? DAY)

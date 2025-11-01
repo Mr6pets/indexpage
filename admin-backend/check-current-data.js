@@ -21,12 +21,13 @@ function checkCategories() {
         try {
           const result = JSON.parse(data);
           console.log('=== 当前后端分类数据 ===');
-          console.log('分类数量:', result.data.categories.length);
-          result.data.categories.forEach((cat, index) => {
+          const categories = Array.isArray(result.data?.items) ? result.data.items : (result.data?.categories || []);
+          console.log('分类数量:', categories.length);
+          categories.forEach((cat, index) => {
             console.log(`${index + 1}. ${cat.name} (${cat.icon}) - ${cat.description}`);
           });
           console.log('');
-          resolve(result.data.categories);
+          resolve(categories);
         } catch (error) {
           reject(error);
         }
@@ -60,11 +61,12 @@ function checkSites() {
         try {
           const result = JSON.parse(data);
           console.log('=== 当前后端网站数据 ===');
-          console.log('网站总数:', result.data.sites.length);
+          const sites = Array.isArray(result.data?.items) ? result.data.items : (result.data?.sites || []);
+          console.log('网站总数:', sites.length);
           
           // 按分类统计
           const sitesByCategory = {};
-          result.data.sites.forEach(site => {
+          sites.forEach(site => {
             if (!sitesByCategory[site.category_id]) {
               sitesByCategory[site.category_id] = [];
             }
@@ -81,7 +83,7 @@ function checkSites() {
             }
           });
           console.log('');
-          resolve(result.data.sites);
+          resolve(sites);
         } catch (error) {
           reject(error);
         }

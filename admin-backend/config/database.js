@@ -51,7 +51,7 @@ const initDatabase = async () => {
       )
     `);
 
-    // 创建分类表
+    // 创建分类表（与路由保持一致，使用 status 字段）
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS categories (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -59,13 +59,13 @@ const initDatabase = async () => {
         icon VARCHAR(50),
         description TEXT,
         sort_order INT DEFAULT 0,
-        is_active BOOLEAN DEFAULT TRUE,
+        status ENUM('active', 'inactive') DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
 
-    // 创建网站表
+    // 创建网站表（与路由保持一致，使用 status 字段）
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS sites (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -75,7 +75,7 @@ const initDatabase = async () => {
         icon VARCHAR(50),
         category_id INT,
         sort_order INT DEFAULT 0,
-        is_active BOOLEAN DEFAULT TRUE,
+        status ENUM('active', 'inactive') DEFAULT 'active',
         click_count INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
