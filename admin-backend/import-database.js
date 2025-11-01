@@ -33,13 +33,15 @@ async function importDatabase() {
     }
 
     console.log('📖 读取导入文件...');
-    const sqlContent = await fs.readFile(importPath, 'utf8');
+    let sqlContent = await fs.readFile(importPath, 'utf8');
+    // 去除以 -- 开头的注释行，确保 DROP/INSERT 不被误过滤
+    sqlContent = sqlContent.replace(/^--.*$/mg, '');
     console.log(`📊 文件大小: ${(sqlContent.length / 1024).toFixed(2)} KB`);
 
     // 创建数据库（如果不存在）
     console.log('🔧 创建数据库（如果不存在）...');
-    await connection.execute(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
-    await connection.execute(`USE \`${dbConfig.database}\``);
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+    await connection.query(`USE \`${dbConfig.database}\``);
 
     console.log('🚀 开始导入数据...');
     
@@ -47,7 +49,7 @@ async function importDatabase() {
     const statements = sqlContent
       .split(';')
       .map(stmt => stmt.trim())
-      .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
+      .filter(stmt => stmt.length > 0);
 
     let successCount = 0;
     let errorCount = 0;
@@ -58,7 +60,7 @@ async function importDatabase() {
       if (statement.length === 0) continue;
       
       try {
-        await connection.execute(statement);
+        await connection.query(statement);
         successCount++;
         
         // 显示进度

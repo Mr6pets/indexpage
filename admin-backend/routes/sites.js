@@ -96,8 +96,8 @@ router.get('/', ApiResponse.asyncHandler(async (req, res) => {
        LEFT JOIN categories c ON s.category_id = c.id
        ${whereClause}
        ORDER BY s.sort_order ASC, s.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [...params, pagination.pageSize, offset]
+       LIMIT ${pagination.pageSize} OFFSET ${offset}`,
+      params
     );
     sites = sitesResult;
 

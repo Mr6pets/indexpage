@@ -379,7 +379,7 @@ router.get('/ranking', authenticateToken, ApiResponse.asyncHandler(async (req, r
 
   // 使用MySQL数据库
   let query;
-  let params = [validatedLimit];
+  let params = [];
 
   if (validatedType === 'clicks') {
     // 按总点击数排序
@@ -391,7 +391,7 @@ router.get('/ranking', authenticateToken, ApiResponse.asyncHandler(async (req, r
       LEFT JOIN categories c ON s.category_id = c.id
       WHERE s.status = "active"
       ORDER BY s.click_count DESC
-      LIMIT ?
+      LIMIT ${validatedLimit}
     `;
   } else if (validatedType === 'recent') {
     // 按最近访问量排序
@@ -404,11 +404,11 @@ router.get('/ranking', authenticateToken, ApiResponse.asyncHandler(async (req, r
       LEFT JOIN categories c ON s.category_id = c.id
       LEFT JOIN access_logs al ON s.id = al.site_id AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
       WHERE s.status = "active"
-      GROUP BY s.id
+      GROUP BY s.id, s.name, s.url, s.icon, s.click_count, c.name, c.icon
       ORDER BY recent_visits DESC
-      LIMIT ?
+      LIMIT ${validatedLimit}
     `;
-    params = [validatedDays, validatedLimit];
+    params = [validatedDays];
   }
 
   try {
@@ -465,7 +465,7 @@ router.get('/rankings', authenticateToken, ApiResponse.asyncHandler(async (req, 
   const validatedType = Validator.validateEnum(type, ['clicks', 'recent'], '排序类型');
 
   let query;
-  let params = [validatedLimit];
+  let params = [];
 
   if (validatedType === 'clicks') {
     // 按总点击数排序
@@ -477,7 +477,7 @@ router.get('/rankings', authenticateToken, ApiResponse.asyncHandler(async (req, 
       LEFT JOIN categories c ON s.category_id = c.id
       WHERE s.status = "active"
       ORDER BY s.click_count DESC
-      LIMIT ?
+      LIMIT ${validatedLimit}
     `;
   } else if (validatedType === 'recent') {
     // 按最近访问量排序
@@ -490,11 +490,11 @@ router.get('/rankings', authenticateToken, ApiResponse.asyncHandler(async (req, 
       LEFT JOIN categories c ON s.category_id = c.id
       LEFT JOIN access_logs al ON s.id = al.site_id AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
       WHERE s.status = "active"
-      GROUP BY s.id
+      GROUP BY s.id, s.name, s.url, s.icon, s.click_count, c.name, c.icon
       ORDER BY recent_visits DESC
-      LIMIT ?
+      LIMIT ${validatedLimit}
     `;
-    params = [validatedDays, validatedLimit];
+    params = [validatedDays];
   }
 
   const [rankings] = await pool.execute(query, params);

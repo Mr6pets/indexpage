@@ -64,7 +64,7 @@ router.get('/', ApiResponse.asyncHandler(async (req, res) => {
     let params = [];
 
     if (pagination.search) {
-      whereClause += ' AND (name LIKE ? OR description LIKE ?)';
+      whereClause += ' AND (c.name LIKE ? OR c.description LIKE ?)';
       params.push(`%${pagination.search}%`, `%${pagination.search}%`);
     }
 
@@ -76,14 +76,18 @@ router.get('/', ApiResponse.asyncHandler(async (req, res) => {
     // 获取分类列表
     const [categoriesResult] = await pool.execute(
       `SELECT c.*, 
-              COUNT(s.id) as site_count
+              IFNULL(sc.site_count, 0) AS site_count
        FROM categories c
-       LEFT JOIN sites s ON c.id = s.category_id AND s.status = 'active'
+       LEFT JOIN (
+         SELECT s.category_id, COUNT(*) AS site_count
+         FROM sites s
+         WHERE s.status = 'active'
+         GROUP BY s.category_id
+       ) sc ON sc.category_id = c.id
        ${whereClause}
-       GROUP BY c.id
        ORDER BY c.sort_order ASC, c.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [...params, pagination.pageSize, pagination.offset]
+       LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}`,
+      params
     );
     categories = categoriesResult;
 
@@ -105,11 +109,15 @@ router.get('/:id', async (req, res) => {
 
     const [categories] = await pool.execute(
       `SELECT c.*, 
-              COUNT(s.id) as site_count
+              IFNULL(sc.site_count, 0) AS site_count
        FROM categories c
-       LEFT JOIN sites s ON c.id = s.category_id AND s.status = 'active'
-       WHERE c.id = ?
-       GROUP BY c.id`,
+       LEFT JOIN (
+         SELECT s.category_id, COUNT(*) AS site_count
+         FROM sites s
+         WHERE s.status = 'active'
+         GROUP BY s.category_id
+       ) sc ON sc.category_id = c.id
+       WHERE c.id = ?`,
       [id]
     );
 

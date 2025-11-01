@@ -86,7 +86,9 @@ const API_BASE_URL = 'http://localhost:3001/api'
 
 // 跳转到管理后台
 const goToAdmin = () => {
-  window.open('http://localhost:5174', '_blank')
+  // 本地开发端口为 5173；生产环境建议通过 Nginx 子路径 /admin 或子域名
+  const adminUrl = 'http://localhost:5173'
+  window.open(adminUrl, '_blank')
 }
 
 // 获取分类数据

@@ -51,12 +51,15 @@ async function logActivity(activity) {
  * @param {string} options.targetType - 目标类型过滤（可选）
  */
 async function getActivityLogs(options = {}) {
+  // 先解析与规范化分页参数，确保在错误分支也可用
+  const parsedLimit = Math.min(100, Math.max(1, parseInt(options.limit) || 20));
+  const parsedOffset = Math.max(0, parseInt(options.offset) || 0);
+
+  let connection;
   try {
-    const connection = await pool.getConnection();
+    connection = await pool.getConnection();
     
     const {
-      limit = 20,
-      offset = 0,
       userId = null,
       actionType = null,
       targetType = null
@@ -93,7 +96,7 @@ async function getActivityLogs(options = {}) {
       ${whereClause}
       ORDER BY al.created_at DESC
       LIMIT ? OFFSET ?
-    `, [...params, limit, offset]);
+    `, [...params, parsedLimit, parsedOffset]);
 
     // 获取总数
     const [countRows] = await connection.execute(`
@@ -107,17 +110,21 @@ async function getActivityLogs(options = {}) {
     return {
       activities: rows,
       total: countRows[0].total,
-      limit,
-      offset
+      limit: parsedLimit,
+      offset: parsedOffset
     };
   } catch (error) {
     console.error('Error getting activity logs:', error);
     return {
       activities: [],
       total: 0,
-      limit,
-      offset
+      limit: parsedLimit,
+      offset: parsedOffset
     };
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch (_) {}
+    }
   }
 }
 

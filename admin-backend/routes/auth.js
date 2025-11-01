@@ -58,7 +58,7 @@ router.post('/login', ApiResponse.asyncHandler(async (req, res) => {
   // 生成 JWT token
   const token = jwt.sign(
     { userId: user.id, username: user.username, role: user.role },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || 'mock-jwt-secret',
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 
@@ -236,7 +236,7 @@ router.post('/refresh', authenticateToken, async (req, res) => {
     // 生成新的 token
     const token = jwt.sign(
       { userId: req.user.id, username: req.user.username, role: req.user.role },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'mock-jwt-secret',
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
 
