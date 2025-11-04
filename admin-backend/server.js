@@ -1,9 +1,9 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const path = require('path');
-require('dotenv').config();
+const express = require('express');//Web 应用框架，用于构建 Node.js 服务器 提供路由、中间件、模板引擎等功能
+const cors = require('cors');//启用跨域请求支持 允许前端应用从不同域名/端口访问 API 防止浏览器的同源策略限制
+const helmet = require('helmet');//帮助设置安全 HTTP 响应头 保护应用免受常见攻击
+const rateLimit = require('express-rate-limit');//限制每个IP在一定时间内的请求次数 防止恶意攻击或 DDOS 攻击
+const path = require('path');// 提供路径操作工具 用于处理文件路径 确保跨平台兼容性
+require('dotenv').config();// 环境变量管理 从 .env 文件加载环境变量到 process.env 保护敏感信息（如数据库密码、API密钥）
 
 // 使用MySQL数据库
 let database;
@@ -23,7 +23,7 @@ const PORT = process.env.PORT || 3001;
 
 // 安全中间件
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" }// 允许跨域资源共享
 }));
 
 // CORS 配置
@@ -49,22 +49,22 @@ const limiter = rateLimit({
   },
   skip: (req) => {
     // 跳过本地开发环境的限制
-    return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
+    return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';// 
   }
 });
 app.use('/api/', limiter);
 
 // 解析请求体
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '10mb' }));// 解析 JSON 请求体 限制大小为 10MB
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));// 解析 URL 编码的请求体 限制大小为 10MB
 
 // 统一响应格式中间件
 const ApiResponse = require('./utils/response');
 app.use(ApiResponse.middleware);
 
 // 静态文件服务
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));// 提供上传文件的静态访问 例如：http://localhost:3001/uploads/filename.jpg
+app.use('/public', express.static(path.join(__dirname, 'public')));// 提供公共静态文件的访问 例如：http://localhost:3001/public/index.html
 
 // 健康检查
 app.get('/health', (req, res) => {
@@ -169,8 +169,13 @@ const startServer = async () => {
       process.exit(1);
     }
     
-    // 初始化数据库
-    await initDatabase();
+    // 可选：初始化数据库（通过环境变量控制）
+    if (process.env.INIT_DB_ON_START === 'true') {
+      console.log('🔧 INIT_DB_ON_START=true，执行数据库初始化');
+      await initDatabase();
+    } else {
+      console.log('⏭️ 跳过数据库初始化（INIT_DB_ON_START 未开启）');
+    }
     
     // 启动服务器
     app.listen(PORT, () => {

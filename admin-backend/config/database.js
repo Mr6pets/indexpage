@@ -1,6 +1,5 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
-
 // 数据库连接池配置
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',

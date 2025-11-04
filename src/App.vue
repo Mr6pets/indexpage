@@ -68,7 +68,7 @@
     </div>
 
     <footer class="footer">
-      <p>&copy; 2024 导航页面 - 使用 Vue 3 构建</p>
+      <p>&copy; 2025 导航页面 - 使用 Vue 3 构建</p>
     </footer>
   </div>
 </template>
