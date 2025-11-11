@@ -9,13 +9,13 @@ const localConfig = {
   database: process.env.DB_NAME || 'navigation_admin'
 };
 
-// 阿里云数据库配置
+// 阿里云数据库配置（优先从环境变量读取）
 const aliyunConfig = {
-  host: '47.100.161.36',
-  port: 3306,
-  user: 'root',
-  password: '8bR39mc9!',
-  database: 'navigation_admin',
+  host: process.env.ALIYUN_DB_HOST || '47.100.161.36',
+  port: parseInt(process.env.ALIYUN_DB_PORT || '3306', 10),
+  user: process.env.ALIYUN_DB_USER || 'root',
+  password: process.env.ALIYUN_DB_PASSWORD || '8bR39mc9!',
+  database: process.env.ALIYUN_DB_NAME || 'navigation_admin',
   charset: 'utf8mb4',
   timezone: '+08:00'
 };

@@ -10,7 +10,7 @@ const dbConfig = {
   charset: 'utf8mb4'
 };
 
-// 从exported-data.sql中提取的完整网站数据
+// 从数据库导出文件（database-export.sql）提取的完整网站数据
 const allSitesData = [
   {id: 1, name: '百度', description: '全球最大的中文搜索引擎', url: 'https://www.baidu.com', icon: '🔍', category_id: 1, click_count: 0, sort_order: 1, status: 'active'},
   {id: 2, name: 'Google', description: '全球最大的搜索引擎', url: 'https://www.google.com', icon: '🔍', category_id: 1, click_count: 0, sort_order: 2, status: 'active'},

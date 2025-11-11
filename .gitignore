@@ -45,3 +45,8 @@ Thumbs.db
  
 # Local Nginx config (do not track)
 admin-backend/nginx.conf
+ 
+# Backend generated artifacts (ignore dumps, backups, and logs)
+admin-backend/database-export.sql
+admin-backend/backups/
+admin-backend/logs/

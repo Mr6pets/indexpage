@@ -4,6 +4,16 @@
 
 本项目已成功将模拟数据迁移到本地MySQL数据库，并提供了完整的阿里云部署方案。
 
+## 速查表与快速命令入口
+- 速查表：`README-deployment-cheatsheet.md`（精炼版命令与脚本说明、参数与注意事项）
+- 常用命令：
+  - 构建与产出生产启动文件：`node deploy-production.js`
+  - 首次上云部署：`node export-database.js` → `node deploy-to-aliyun.js` → `node verify-aliyun-data.js`
+  - 对齐结构（预览→执行）：`node align-aliyun-schema.js --dry-run` → `node align-aliyun-schema.js --execute`
+  - 清理阿里云多余记录：`node cleanup-aliyun-extra-records.js --dry-run` → `node cleanup-aliyun-extra-records.js --execute`
+  - 数据对比与同步：`node compare-databases.js` → `node sync-to-aliyun.js`
+  - 导出/导入入口：`node sync-database.js export|import|check`
+
 ## 已完成的工作
 
 ### ✅ 本地MySQL数据库设置

@@ -23,9 +23,12 @@ async function run() {
     await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
     await connection.query(`USE \`${dbConfig.database}\``);
 
-    const sqlPath = path.join(__dirname, 'exported-data.sql');
-    if (!fs.existsSync(sqlPath)) {
-      console.error('❌ 找不到 exported-data.sql');
+    // 优先使用统一命名的导出文件，兼容旧文件名
+    const preferred = path.join(__dirname, 'database-export.sql');
+    const legacy = path.join(__dirname, 'exported-data.sql');
+    const sqlPath = fs.existsSync(preferred) ? preferred : (fs.existsSync(legacy) ? legacy : null);
+    if (!sqlPath) {
+      console.error('❌ 找不到导出SQL（database-export.sql 或 exported-data.sql）');
       process.exit(1);
     }
 

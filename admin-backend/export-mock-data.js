@@ -76,7 +76,8 @@ async function exportMockDataToSQL() {
     sqlContent += `ALTER TABLE sites AUTO_INCREMENT = ${Math.max(...database.sites.map(s => s.id)) + 1};\n`;
     
     // 保存SQL文件
-    const exportPath = path.join(__dirname, 'exported-data.sql');
+// 统一导出文件名为 database-export.sql
+const exportPath = path.join(__dirname, 'database-export.sql');
     fs.writeFileSync(exportPath, sqlContent, 'utf8');
     
     console.log('✅ 数据导出完成!');

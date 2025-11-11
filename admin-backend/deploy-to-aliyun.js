@@ -2,12 +2,13 @@ const mysql = require('mysql2/promise');
 const fs = require('fs').promises;
 const path = require('path');
 
-// 阿里云数据库配置（不指定数据库，先连接服务器）
+// 阿里云数据库配置（优先从环境变量读取）
 const aliyunConfig = {
-  host: '47.100.161.36',
-  port: 3306,
-  user: 'root',
-  password: '8bR39mc9!',
+  host: process.env.ALIYUN_DB_HOST || '47.100.161.36',
+  port: parseInt(process.env.ALIYUN_DB_PORT || '3306', 10),
+  user: process.env.ALIYUN_DB_USER || 'root',
+  password: process.env.ALIYUN_DB_PASSWORD || '8bR39mc9!',
+  database: process.env.ALIYUN_DB_NAME || 'navigation_admin',
   charset: 'utf8mb4',
   timezone: '+08:00'
 };
@@ -25,7 +26,7 @@ async function deployToAliyun() {
     
     // 创建数据库（如果不存在）
     console.log('🗄️ 创建数据库...');
-    await connection.query('CREATE DATABASE IF NOT EXISTS navigation_admin CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${aliyunConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
     
     // 关闭当前连接，重新连接到指定数据库
     await connection.end();
@@ -33,7 +34,7 @@ async function deployToAliyun() {
     // 重新连接到指定数据库
     connection = await mysql.createConnection({
       ...aliyunConfig,
-      database: 'navigation_admin'
+      database: aliyunConfig.database
     });
     console.log('✅ 数据库创建/选择成功');
     
@@ -134,8 +135,15 @@ async function deployToAliyun() {
     
     // 读取并导入数据
     console.log('📥 导入数据...');
-    const sqlFile = path.join(__dirname, 'exported-data.sql');
-    const sqlContent = await fs.readFile(sqlFile, 'utf8');
+    // 优先使用统一命名的导出文件，兼容旧文件名
+    const preferred = path.join(__dirname, 'database-export.sql');
+    const legacy = path.join(__dirname, 'exported-data.sql');
+    const sqlPath = await (async () => {
+      try { await fs.access(preferred); return preferred; } catch {}
+      try { await fs.access(legacy); return legacy; } catch {}
+      throw new Error('未找到数据库导出文件：database-export.sql 或 exported-data.sql');
+    })();
+    const sqlContent = await fs.readFile(sqlPath, 'utf8');
     
     // 分割SQL语句并执行
     const statements = sqlContent.split(';').filter(stmt => stmt.trim());

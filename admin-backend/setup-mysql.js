@@ -117,9 +117,12 @@ async function setupMySQL() {
     
     // 9. 导入数据
     console.log('📥 导入数据...');
-    const sqlFilePath = path.join(__dirname, 'exported-data.sql');
+    // 优先使用统一命名的导出文件，兼容旧文件名
+    const preferred = path.join(__dirname, 'database-export.sql');
+    const legacy = path.join(__dirname, 'exported-data.sql');
+    const sqlFilePath = fs.existsSync(preferred) ? preferred : (fs.existsSync(legacy) ? legacy : null);
     
-    if (fs.existsSync(sqlFilePath)) {
+    if (sqlFilePath && fs.existsSync(sqlFilePath)) {
       const sqlContent = fs.readFileSync(sqlFilePath, 'utf8');
       
       // 分割SQL语句并执行

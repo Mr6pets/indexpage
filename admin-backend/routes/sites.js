@@ -337,7 +337,7 @@ router.delete('/:id', authenticateToken, requireEditor, ApiResponse.asyncHandler
     title: '删除网站',
     description: `删除了网站 "${siteName}"`,
     ipAddress: req.ip,
-    userAgent: req.get('User-Agent')
+    userAgent: req.get('User-Agent') 
   });
 
   res.success(null, '网站删除成功');
