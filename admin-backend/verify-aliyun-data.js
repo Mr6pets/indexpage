@@ -73,16 +73,36 @@ async function verifyAliyunData() {
     const [settings] = await connection.query('SELECT * FROM settings');
     console.log(`📊 设置项总数: ${settings.length}`);
     settings.forEach(setting => {
-      console.log(`   - ${setting.key}: ${setting.value}`);
+      const keyName = setting.key_name || setting.key || '未命名';
+      console.log(`   - ${keyName}: ${setting.value}`);
     });
     
     // 验证统计数据
     console.log('\n📊 验证统计数据...');
-    const [statistics] = await connection.query('SELECT * FROM statistics ORDER BY date DESC LIMIT 5');
-    console.log(`📊 统计记录数: ${statistics.length}`);
-    statistics.forEach(stat => {
-      console.log(`   - ${stat.date}: 访问 ${stat.page_views}, 独立访客 ${stat.unique_visitors}`);
-    });
+    // 兼容不同的统计表结构：优先使用 date，其次 visited_at/created_at
+    const [statCols] = await connection.query(
+      'SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = ? AND table_name = "statistics"',
+      [aliyunConfig.database]
+    );
+    const statColNames = statCols.map(r => r.COLUMN_NAME);
+    const orderCol = statColNames.includes('date')
+      ? 'date'
+      : (statColNames.includes('visited_at')
+        ? 'visited_at'
+        : (statColNames.includes('created_at') ? 'created_at' : null));
+
+    if (orderCol) {
+      const [statistics] = await connection.query(`SELECT * FROM statistics ORDER BY ${orderCol} DESC LIMIT 5`);
+      console.log(`📊 统计记录数: ${statistics.length}`);
+      statistics.forEach(stat => {
+        const when = stat.date || stat.visited_at || stat.created_at || '未知时间';
+        const pv = stat.page_views ?? stat.total_clicks ?? stat.visit_count ?? 'N/A';
+        const uv = stat.unique_visitors ?? stat.unique_visitors ?? 'N/A';
+        console.log(`   - ${when}: PV ${pv}, UV ${uv}`);
+      });
+    } else {
+      console.log('ℹ️ 统计表不存在日期/时间列，跳过示例记录输出');
+    }
     
     // 验证访问日志
     console.log('\n📝 验证访问日志...');

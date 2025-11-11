@@ -1,12 +1,13 @@
 const mysql = require('mysql2/promise');
+require('dotenv').config();
 
 async function checkRealData() {
   try {
     const conn = await mysql.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: '8bR39mc9',
-      database: 'navigation_admin'
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'navigation_admin'
     });
 
     console.log('🔍 检查MySQL数据库中的真实数据...\n');

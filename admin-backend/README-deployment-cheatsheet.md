@@ -1,5 +1,23 @@
 # 注意与回滚指南（安全优先 / Notes and Rollback Guide）
 
+## 检查脚本速查（Check Scripts Cheatsheet）
+- 运行全部检查：`npm run check:all`
+- API 数据检查：`npm run check:api`
+- 当前网站详情：`npm run check:sites`
+- 本地 MySQL 数据：`npm run check:db`
+- 网站计数与状态：`npm run check:counts`
+- 用户数据检查：`npm run check:users`
+- 表结构对比（本地 vs 阿里云）：`npm run check:structure`
+- 阿里云网站图标检查：`npm run check:aliyun:icons`
+
+前置条件：
+- 本地服务已启动（`npm start`），用于 API 类检查。
+- `.env` 已配置本地/阿里云数据库连接信息（`DB_*` 和 `ALIYUN_DB_*`）。
+
+常见问题：
+- 端口占用（`3001`）：释放端口后再启动服务。
+- 数据库连接失败：检查 `.env` 主机、用户名、密码与库名是否一致。
+
 ## 冒烟测试速查表（Smoke Tests）
 - 启动后端后运行以下命令快速验收核心功能：
   - `npm run smoke:login` → 验证登录与令牌获取

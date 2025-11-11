@@ -11,7 +11,15 @@
     "smoke:integration": "node test-integration.js",
     "smoke:dashboard": "node test-dashboard-api.js",
     "smoke:verify-aliyun": "node verify-aliyun-data.js",
-    "smoke": "npm run smoke:login && npm run smoke:integration && npm run smoke:dashboard"
+    "smoke": "npm run smoke:login && npm run smoke:integration && npm run smoke:dashboard",
+    "check:api": "node check-current-data.js",
+    "check:sites": "node check-current-sites.js",
+    "check:db": "node check-mysql-data.js",
+    "check:counts": "node check-db-count.js",
+    "check:users": "node check-users.js",
+    "check:structure": "node check-table-structure.js",
+    "check:aliyun:icons": "node check-aliyun-icons.js",
+    "check:all": "node checks-runner.js"
   },
   "keywords": [
     "navigation",

@@ -1,11 +1,12 @@
 const mysql = require('mysql2/promise');
+require('dotenv').config();
 
 const aliyunConfig = {
-  host: '47.100.161.36',
-  port: 3306,
-  user: 'root',
-  password: '8bR39mc9!',
-  database: 'navigation_admin',
+  host: process.env.ALIYUN_DB_HOST || '47.100.161.36',
+  port: Number(process.env.ALIYUN_DB_PORT || 3306),
+  user: process.env.ALIYUN_DB_USER || 'root',
+  password: process.env.ALIYUN_DB_PASSWORD || '',
+  database: process.env.ALIYUN_DB_NAME || 'navigation_admin',
   charset: 'utf8mb4',
   timezone: '+08:00'
 };
