@@ -18,7 +18,9 @@ async function importDatabase() {
   
   try {
     console.log('🔄 连接到MySQL数据库...');
-    connection = await mysql.createConnection(dbConfig);
+    // Create a connection without selecting a database first
+    const rootConfig = { ...dbConfig, database: undefined };
+    connection = await mysql.createConnection(rootConfig);
     console.log('✅ 数据库连接成功');
 
     // 检查导入文件是否存在

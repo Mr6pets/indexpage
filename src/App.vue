@@ -82,12 +82,12 @@ const loading = ref(true)
 const error = ref(null)
 
 // API 基础 URL
-const API_BASE_URL = 'http://localhost:3001/api'
+const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || '/api'
 
 // 跳转到管理后台
 const goToAdmin = () => {
   // 本地开发端口为 5173；生产环境建议通过 Nginx 子路径 /admin 或子域名
-  const adminUrl = 'http://localhost:5173'
+  const adminUrl = '/admin'
   window.open(adminUrl, '_blank')
 }
 

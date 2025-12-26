@@ -3,13 +3,16 @@ const fs = require('fs').promises;
 const path = require('path');
 require('dotenv').config();
 
+// 可选：从阿里云导出数据
+const useAliyun = (process.env.USE_ALIYUN_FOR_EXPORT || '').toLowerCase() === 'true';
+
 // 数据库连接配置
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'navigation_admin',
+  host: useAliyun ? (process.env.ALIYUN_DB_HOST || 'localhost') : (process.env.DB_HOST || 'localhost'),
+  port: useAliyun ? (parseInt(process.env.ALIYUN_DB_PORT || '3306', 10)) : (parseInt(process.env.DB_PORT || '3306', 10)),
+  user: useAliyun ? (process.env.ALIYUN_DB_USER || 'root') : (process.env.DB_USER || 'root'),
+  password: useAliyun ? (process.env.ALIYUN_DB_PASSWORD || '') : (process.env.DB_PASSWORD || ''),
+  database: useAliyun ? (process.env.ALIYUN_DB_NAME || 'navigation_admin') : (process.env.DB_NAME || 'navigation_admin'),
   multipleStatements: true
 };
 

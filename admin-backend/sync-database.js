@@ -14,9 +14,13 @@ function showHelp() {
   node sync-database.js export   # 导出当前数据库
   node sync-database.js import   # 导入数据库
   node sync-database.js check    # 检查数据库状态
+  node sync-database.js pull-aliyun # 从阿里云拉取数据到本地
   node sync-database.js help     # 显示帮助
 
 示例:
+  # 从阿里云同步到本地
+  node sync-database.js pull-aliyun
+
   # 在当前电脑导出数据
   node sync-database.js export
   
@@ -100,6 +104,38 @@ async function checkDatabase() {
   }
 }
 
+async function pullFromAliyun() {
+  console.log('🚀 开始从阿里云同步数据到本地...');
+  console.log('⚠️ 注意: 请确保本地IP已加入阿里云MySQL白名单');
+  
+  // 1. 从阿里云导出
+  console.log('📥 步骤 1/2: 从阿里云导出数据...');
+  const originalEnv = process.env.USE_ALIYUN_FOR_EXPORT;
+  process.env.USE_ALIYUN_FOR_EXPORT = 'true';
+  
+  try {
+    const result = await runCommand('node export-database.js');
+    console.log(result.stdout);
+    if (result.stderr) console.warn(result.stderr);
+  } catch (error) {
+    console.error('❌ 导出失败:', error.message);
+    if (error.message.includes('Access denied')) {
+        console.error('💡 可能是IP未授权。请将本地IP添加到阿里云RDS白名单。');
+    }
+    return;
+  } finally {
+    if (originalEnv) {
+        process.env.USE_ALIYUN_FOR_EXPORT = originalEnv;
+    } else {
+        delete process.env.USE_ALIYUN_FOR_EXPORT;
+    }
+  }
+
+  // 2. 导入到本地
+  console.log('💾 步骤 2/2: 导入数据到本地...');
+  await importDatabase();
+}
+
 async function main() {
   console.log('🔄 数据库同步工具');
   console.log('==================');
@@ -113,6 +149,9 @@ async function main() {
       break;
     case 'check':
       await checkDatabase();
+      break;
+    case 'pull-aliyun':
+      await pullFromAliyun();
       break;
     case 'help':
     case '--help':

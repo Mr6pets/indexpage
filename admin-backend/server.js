@@ -3,7 +3,21 @@ const cors = require('cors');//启用跨域请求支持 允许前端应用从不
 const helmet = require('helmet');//帮助设置安全 HTTP 响应头 保护应用免受常见攻击
 const rateLimit = require('express-rate-limit');//限制每个IP在一定时间内的请求次数 防止恶意攻击或 DDOS 攻击
 const path = require('path');// 提供路径操作工具 用于处理文件路径 确保跨平台兼容性
-require('dotenv').config();// 环境变量管理 从 .env 文件加载环境变量到 process.env 保护敏感信息（如数据库密码、API密钥）
+
+// 加载环境变量：优先尝试加载 .env，如果不存在或 FTP 无法上传，尝试加载 server-config.env
+const dotenv = require('dotenv');
+const fs = require('fs');
+
+// 1. 尝试加载标准的 .env 或 .env.production
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
+dotenv.config({ path: path.join(__dirname, envFile) });
+
+// 2. 如果 DB_HOST 没加载到，或者为了兼容 FTP 上传的 server-config.env，尝试加载它
+const serverConfigFile = path.join(__dirname, 'server-config.env');
+if (fs.existsSync(serverConfigFile)) {
+    console.log('📝 Loading configuration from server-config.env');
+    dotenv.config({ path: serverConfigFile });
+}
 
 // 使用MySQL数据库
 let database;
@@ -13,7 +27,17 @@ try {
   console.log('✅ MySQL数据库连接成功');
 } catch (error) {
   console.log('⚠️ MySQL连接失败，使用模拟数据库');
-  database = require('./database/mock-database');
+  try {
+    database = require('./database/mock-database');
+  } catch (mockError) {
+    console.error('❌ 模拟数据库也加载失败 (可能是文件被删除):', mockError.message);
+    // 提供一个最小化的 fallback 对象，防止服务崩溃
+    database = {
+      testConnection: async () => false,
+      initDatabase: async () => {},
+      query: async () => { throw new Error('Database not available'); }
+    };
+  }
 }
 
 const { testConnection, initDatabase } = database;
@@ -33,7 +57,9 @@ app.use(cors({
     process.env.ADMIN_FRONTEND_URL || 'http://localhost:3000',
     'http://localhost:3000',
     'http://localhost:5173',
-    'http://localhost:5174'  // 添加admin-frontend的端口
+    'http://localhost:4173',
+    'http://localhost:5174',
+    'http://localhost:5175'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -84,6 +110,10 @@ app.use('/api/settings', require('./routes/settings'));
 app.use('/api/stats', require('./routes/stats'));
 
 // API 根路径 - 显示API文档
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date() });
+});
+
 app.get('/api', (req, res) => {
   res.json({
     success: true,
@@ -165,8 +195,8 @@ const startServer = async () => {
     // 测试数据库连接
     const dbConnected = await testConnection();
     if (!dbConnected) {
-      console.error('❌ 无法连接到数据库，服务器启动失败');
-      process.exit(1);
+      console.warn('⚠️ 无法连接到数据库，但为了保持服务可用，将尝试启动服务');
+      // 不退出，允许服务启动，至少能响应 404 或其他请求，而不是直接挂掉导致 502
     }
     
     // 可选：初始化数据库（通过环境变量控制）

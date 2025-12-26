@@ -52,3 +52,6 @@ admin-backend/nginx.full.conf
 admin-backend/database-export.sql
 admin-backend/backups/
 admin-backend/logs/
+
+# Deployment packages
+deploy_package/

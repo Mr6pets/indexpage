@@ -6,8 +6,8 @@ module.exports = {
       NODE_ENV: 'development'
     },
     env_production: {
-      NODE_ENV: 'production',
-      PORT: 3001
+      NODE_ENV: 'production'
+      // PORT: 3001  <-- Removed hardcoded port to allow .env file to control it
     },
     instances: 1,
     autorestart: true,
