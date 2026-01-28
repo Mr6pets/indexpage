@@ -9,9 +9,9 @@
           </h1>
           <p class="subtitle">快速访问常用网站</p>
         </div>
-        <div class="admin-section">
-          <button class="admin-btn" @click="goToAdmin">
-            <span class="admin-icon">⚙️</span>
+        <div class="system-section">
+          <button class="system-btn" @click="goToAdmin">
+            <span class="system-icon">⚙️</span>
             后台管理
           </button>
         </div>
@@ -86,8 +86,8 @@ const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || '/api'
 
 // 跳转到管理后台
 const goToAdmin = () => {
-  // 本地开发端口为 5173；生产环境建议通过 Nginx 子路径 /admin 或子域名
-  const adminUrl = '/admin'
+  // 本地开发使用 5173 端口，生产环境使用 /admin 路径
+  const adminUrl = import.meta.env.DEV ? 'http://localhost:5173/admin/' : '/admin/'
   window.open(adminUrl, '_blank')
 }
 
@@ -288,12 +288,12 @@ onMounted(() => {
   flex: 1;
 }
 
-.admin-section {
+.system-section {
   display: flex;
   align-items: center;
 }
 
-.admin-btn {
+.system-btn {
   background: rgba(255, 255, 255, 0.2);
   color: white;
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -310,18 +310,18 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
-.admin-btn:hover {
+.system-btn:hover {
   background: rgba(255, 255, 255, 0.3);
   border-color: rgba(255, 255, 255, 0.5);
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
-.admin-btn:active {
+.system-btn:active {
   transform: translateY(-1px) scale(1.01);
 }
 
-.admin-icon {
+.system-icon {
   font-size: 1.1em;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
@@ -338,7 +338,7 @@ onMounted(() => {
     text-align: center;
   }
   
-  .admin-section {
+  .system-section {
     margin-top: 0;
   }
 }

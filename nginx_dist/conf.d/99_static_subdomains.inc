@@ -60,8 +60,8 @@ location /papercraft/ {
 }
 
 # Mock Data Generator
-    location /mockdatagenerator/ {
-        alias /home/mockdatagenerator/frontend/;
-        index index.html;
-        try_files $uri $uri/ /mockdatagenerator/index.html;
-    }
+location /mockdatagenerator/ {
+    alias /home/mockdatagenerator/frontend/;
+    index index.html;
+    try_files $uri $uri/ /mockdatagenerator/index.html;
+}

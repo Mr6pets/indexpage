@@ -21,96 +21,119 @@ const router = express.Router();
 
 // 获取所有网站
 router.get('/', ApiResponse.asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, search = '', category_id, active } = req.query;
-  
-  // 验证分页参数
-  const pagination = Validator.validatePagination(req.query);
-  
-  let sites;
-  let total;
-  
-  if (siteOperations) {
-    // 使用模拟数据库
-    let allSites;
+  try {
+    console.log('🔍 GET /api/sites Request received');
+    const { page = 1, limit = 10, search = '', category_id, active } = req.query;
     
-    if (category_id) {
-      allSites = siteOperations.getByCategoryId(category_id);
+    // 验证分页参数
+    const pagination = Validator.validatePagination(req.query);
+    
+    let sites;
+    let total;
+    
+    console.log('🔍 Using database mode:', siteOperations ? 'Mock/SiteOperations' : 'MySQL/Pool');
+    
+    if (siteOperations) {
+      // 使用模拟数据库
+      let allSites;
+      
+      try {
+        if (category_id) {
+          allSites = siteOperations.getByCategoryId(category_id);
+        } else {
+          allSites = siteOperations.getAll();
+        }
+        console.log(`🔍 Retrieved ${allSites ? allSites.length : 'null'} sites from operations`);
+      } catch (opError) {
+        console.error('❌ Error in siteOperations:', opError);
+        throw opError;
+      }
+      
+      // 搜索过滤
+      if (search) {
+        allSites = allSites.filter(site => 
+          site.name.toLowerCase().includes(search.toLowerCase()) ||
+          (site.description && site.description.toLowerCase().includes(search.toLowerCase())) ||
+          site.url.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+      
+      // 状态过滤
+      if (active !== undefined) {
+        const status = active === 'true' ? 'active' : 'inactive';
+        allSites = allSites.filter(site => site.status === status);
+      }
+      
+      total = allSites.length;
+      
+      // 分页
+      const offset = (pagination.page - 1) * pagination.pageSize;
+      sites = allSites.slice(offset, offset + pagination.pageSize);
+      
+      // 添加分类信息（模拟）
+      sites = sites.map(site => ({
+        ...site,
+        category_name: '默认分类', // 暂时设为默认值
+        category_icon: 'folder'
+      }));
+      
     } else {
-      allSites = siteOperations.getAll();
-    }
-    
-    // 搜索过滤
-    if (search) {
-      allSites = allSites.filter(site => 
-        site.name.toLowerCase().includes(search.toLowerCase()) ||
-        (site.description && site.description.toLowerCase().includes(search.toLowerCase())) ||
-        site.url.toLowerCase().includes(search.toLowerCase())
+      // 使用MySQL数据库
+      const offset = (pagination.page - 1) * pagination.pageSize;
+  
+      let whereClause = 'WHERE 1=1';
+      let params = [];
+  
+      if (search) {
+        whereClause += ' AND (s.name LIKE ? OR s.description LIKE ? OR s.url LIKE ?)';
+        params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      }
+  
+      if (category_id) {
+        whereClause += ' AND s.category_id = ?';
+        params.push(category_id);
+      }
+  
+      if (active !== undefined) {
+        whereClause += ' AND s.status = ?';
+        params.push(active === 'true' ? 'active' : 'inactive');
+      }
+  
+      // 获取网站列表
+      const [sitesResult] = await pool.execute(
+        `SELECT s.*, c.name as category_name, c.icon as category_icon
+         FROM sites s
+         LEFT JOIN categories c ON s.category_id = c.id
+         ${whereClause}
+         ORDER BY s.sort_order ASC, s.created_at DESC
+         LIMIT ${pagination.pageSize} OFFSET ${offset}`,
+        params
       );
-    }
-    
-    // 状态过滤
-    if (active !== undefined) {
-      const status = active === 'true' ? 'active' : 'inactive';
-      allSites = allSites.filter(site => site.status === status);
-    }
-    
-    total = allSites.length;
-    
-    // 分页
-    const offset = (pagination.page - 1) * pagination.pageSize;
-    sites = allSites.slice(offset, offset + pagination.pageSize);
-    
-    // 添加分类信息（模拟）
-    sites = sites.map(site => ({
-      ...site,
-      category_name: '默认分类', // 暂时设为默认值
-      category_icon: 'folder'
-    }));
-    
-  } else {
-    // 使用MySQL数据库
-    const offset = (pagination.page - 1) * pagination.pageSize;
+      sites = sitesResult;
 
-    let whereClause = 'WHERE 1=1';
-    let params = [];
-
-    if (search) {
-      whereClause += ' AND (s.name LIKE ? OR s.description LIKE ? OR s.url LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      // 获取总数
+      const [countResult] = await pool.execute(
+        `SELECT COUNT(*) as total FROM sites s ${whereClause}`,
+        params
+      );
+      total = countResult[0].total;
     }
 
-    if (category_id) {
-      whereClause += ' AND s.category_id = ?';
-      params.push(category_id);
-    }
-
-    if (active !== undefined) {
-      whereClause += ' AND s.status = ?';
-      params.push(active === 'true' ? 'active' : 'inactive');
-    }
-
-    // 获取网站列表
-    const [sitesResult] = await pool.execute(
-      `SELECT s.*, c.name as category_name, c.icon as category_icon
-       FROM sites s
-       LEFT JOIN categories c ON s.category_id = c.id
-       ${whereClause}
-       ORDER BY s.sort_order ASC, s.created_at DESC
-       LIMIT ${pagination.pageSize} OFFSET ${offset}`,
-      params
-    );
-    sites = sitesResult;
-
-    // 获取总数
-    const [countResult] = await pool.execute(
-      `SELECT COUNT(*) as total FROM sites s ${whereClause}`,
-      params
-    );
-    total = countResult[0].total;
+    res.success({
+      items: sites,
+      pagination: {
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        total,
+        totalPages: Math.ceil(total / pagination.pageSize)
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error in GET /api/sites:', error);
+    throw error;
   }
-
-  res.paginated(sites, total, pagination.page, pagination.pageSize, '获取网站列表成功');
 }));
+
 
 // 获取单个网站
 router.get('/:id', ApiResponse.asyncHandler(async (req, res) => {
