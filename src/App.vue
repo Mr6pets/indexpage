@@ -10,7 +10,7 @@
           <p class="subtitle">快速访问常用网站</p>
         </div>
         <div class="system-section">
-          <button class="system-btn" @click="goToAdmin">
+          <button v-if="isDev" class="system-btn" @click="goToAdmin">
             <span class="system-icon">⚙️</span>
             后台管理
           </button>
@@ -83,6 +83,7 @@ const error = ref(null)
 
 // API 基础 URL
 const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || '/api'
+const isDev = import.meta.env.DEV
 
 // 跳转到管理后台
 const goToAdmin = () => {
@@ -279,18 +280,20 @@ onMounted(() => {
   margin: 0 auto;
   padding: 0 2rem;
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* 改为居中 */
   align-items: center;
-  gap: 2rem;
+  position: relative; /* 为绝对定位做准备 */
 }
 
 .title-section {
-  flex: 1;
+  text-align: center; /* 确保文字居中 */
 }
 
 .system-section {
-  display: flex;
-  align-items: center;
+  position: absolute; /* 绝对定位到右侧 */
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .system-btn {
@@ -329,17 +332,13 @@ onMounted(() => {
 @media (max-width: 968px) {
   .header-content {
     flex-direction: column;
-    align-items: center;
-    gap: 2rem;
-    text-align: center;
-  }
-  
-  .title-section {
-    text-align: center;
+    justify-content: center;
   }
   
   .system-section {
-    margin-top: 0;
+    position: static; /* 小屏幕取消绝对定位 */
+    transform: none;
+    margin-top: 1rem;
   }
 }
 
