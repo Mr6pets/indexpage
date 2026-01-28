@@ -101,13 +101,46 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API 路由
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/categories', require('./routes/categories'));
-app.use('/api/sites', require('./routes/sites'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/settings', require('./routes/settings'));
-app.use('/api/stats', require('./routes/stats'));
+// API 路由配置函数
+const setupRoutes = (app) => {
+  // 清除路由缓存，确保重新加载时使用最新的数据库配置
+  const routeModules = ['auth', 'categories', 'sites', 'users', 'settings', 'stats'];
+  routeModules.forEach(moduleName => {
+    try {
+      const modulePath = require.resolve(`./routes/${moduleName}`);
+      delete require.cache[modulePath];
+    } catch (e) {
+      // 忽略无法解析的模块
+    }
+  });
+
+  app.use('/api/auth', require('./routes/auth'));
+  app.use('/api/categories', require('./routes/categories'));
+  app.use('/api/sites', require('./routes/sites'));
+  app.use('/api/users', require('./routes/users'));
+  app.use('/api/settings', require('./routes/settings'));
+  app.use('/api/stats', require('./routes/stats'));
+};
+
+// 调试端点：列出已注册的路由
+app.get('/api/_debug/routes', (req, res) => {
+  const routes = [];
+  const walk = (stack, prefix = '') => {
+    stack.forEach(layer => {
+      if (layer.route && layer.route.path) {
+        const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
+        routes.push(`${methods.join('|')} ${prefix}${layer.route.path}`);
+      } else if (layer.name === 'router' && layer.handle && layer.handle.stack) {
+        const match = layer.regexp && layer.regexp.toString().match(/^\/\^\\(.*)\\\/\?\$\//);
+        const base = match ? `/${match[1]}` : prefix;
+        walk(layer.handle.stack, base);
+      }
+    });
+  };
+  walk(app._router.stack);
+  res.json({ routes });
+});
+
 
 // API 根路径 - 显示API文档
 app.get('/api/health', (req, res) => {
@@ -160,55 +193,69 @@ app.get('/api', (req, res) => {
   });
 });
 
-// 404 处理
-app.use((req, res) => {
-  res.error('接口不存在', 404);
-});
-
-// 全局错误处理
-app.use((error, req, res, next) => {
-  console.error('服务器错误:', error);
-  
-  // 数据库错误
-  if (error.code === 'ER_DUP_ENTRY') {
-    return res.error('数据已存在', 409);
-  }
-  
-  // JWT 错误
-  if (error.name === 'JsonWebTokenError') {
-    return res.error('无效的访问令牌', 401);
-  }
-  
-  // 文件上传错误
-  if (error.code === 'LIMIT_FILE_SIZE') {
-    return res.error('文件大小超出限制', 400);
-  }
-  
-  // 默认服务器错误
-  const message = process.env.NODE_ENV === 'development' ? error.message : '服务器内部错误';
-  res.error(message, 500);
-});
+ 
 
 // 启动服务器
 const startServer = async () => {
   try {
     // 测试数据库连接
-    const dbConnected = await testConnection();
+    let dbConnected = await database.testConnection();
+    
     if (!dbConnected) {
-      console.warn('⚠️ 无法连接到数据库，但为了保持服务可用，将尝试启动服务');
-      // 不退出，允许服务启动，至少能响应 404 或其他请求，而不是直接挂掉导致 502
+      console.warn('⚠️ 无法连接到MySQL数据库，切换到模拟数据库 (Mock DB) 模式...');
+      
+      // 设置环境变量，强制 config/database.js 返回模拟数据库
+      process.env.USE_MOCK_DB = 'true';
+      
+      // 清除 database 配置缓存
+      try {
+        const dbConfigPath = require.resolve('./config/database');
+        delete require.cache[dbConfigPath];
+        // 重新加载 database
+        database = require('./config/database');
+        // 验证 Mock DB 连接
+        dbConnected = await database.testConnection();
+        console.log('✅ 已切换到模拟数据库模式');
+      } catch (e) {
+        console.error('切换模拟数据库失败:', e);
+      }
     }
+    
+    // 配置路由 (必须在确定数据库模式后加载)
+    console.log('🔄 Loading routes...');
+    setupRoutes(app);
+
+    app.use((req, res) => {
+      res.error('接口不存在', 404);
+    });
+    
+    app.use((error, req, res, next) => {
+      console.error('服务器错误:', error);
+      if (error.code === 'ER_DUP_ENTRY') {
+        return res.error('数据已存在', 409);
+      }
+      if (error.name === 'JsonWebTokenError') {
+        return res.error('无效的访问令牌', 401);
+      }
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.error('文件大小超出限制', 400);
+      }
+      const message = process.env.NODE_ENV === 'development' ? error.message : '服务器内部错误';
+      res.error(message, 500);
+    });
+ 
     
     // 可选：初始化数据库（通过环境变量控制）
     if (process.env.INIT_DB_ON_START === 'true') {
       console.log('🔧 INIT_DB_ON_START=true，执行数据库初始化');
-      await initDatabase();
+      await database.initDatabase();
     } else {
       console.log('⏭️ 跳过数据库初始化（INIT_DB_ON_START 未开启）');
     }
     
     // 启动服务器
     app.listen(PORT, () => {
+
       console.log('🚀 服务器启动成功!');
       console.log(`📡 服务地址: http://localhost:${PORT}`);
       console.log(`🌍 环境: ${process.env.NODE_ENV || 'development'}`);

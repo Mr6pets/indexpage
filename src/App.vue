@@ -199,21 +199,21 @@ const getFallbackData = () => {
           id: 3,
           name: 'VitePress 博客',
           description: '专业的 Vue 3 博客',
-          url: 'http://vitepress.guluwater.com/',
+          url: 'https://guluwater.com/vitepress/',
           icon: '💧'
         },
         {
           id: 4,
           name: 'Office Tools',
           description: '办公工具集',
-          url: 'http://officetools.guluwater.com/',
+          url: 'https://guluwater.com/officetools/',
           icon: '🛠️'
         },
         {
           id: 5,
           name: 'Online Interface Full',
           description: '在线接口（完整版）',
-          url: 'http://onlineinterfacefull.guluwater.com/',
+          url: 'https://guluwater.com/onlineinterfacefull/',
           icon: '🧩'
         }
       ]

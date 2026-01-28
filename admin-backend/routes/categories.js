@@ -21,7 +21,9 @@ const router = express.Router();
 
 // 获取所有分类
 router.get('/', ApiResponse.asyncHandler(async (req, res) => {
+  console.log('📝 GET /api/categories called');
   const { page = 1, limit = 10, search = '', active } = req.query;
+
   
   // 验证分页参数
   const pagination = Validator.validatePagination(req.query);

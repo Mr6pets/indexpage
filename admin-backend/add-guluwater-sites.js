@@ -17,21 +17,21 @@ async function addGuluWaterSites() {
     const sites = [
       {
         name: 'VitePress 博客',
-        url: 'http://vitepress.guluwater.com/',
+        url: 'https://guluwater.com/vitepress/',
         description: '专业的 Vue 3 博客',
         icon: '💧',
         sort_order: 1
       },
       {
         name: '通用方法库',
-        url: 'http://generalmethodsutils.guluwater.com/',
+        url: 'https://guluwater.com/generalmethodsutils/',
         description: '实用的JavaScript工具库',
         icon: '🛠️',
         sort_order: 2
       },
       {
         name: 'Office Tools',
-        url: 'http://officetools.guluwater.com/',
+        url: 'https://guluwater.com/officetools/',
         description: '办公工具集',
         icon: '📄',
         sort_order: 3

@@ -80,14 +80,14 @@ async function initMockDatabase() {
     // 创建默认网站数据
     const defaultSites = [
       // 我的服务 (category_id: 1) - 用户的个人服务
-      { name: 'VitePress 博客', description: '专业的 Vue 3 博客', url: 'http://vitepress.guluwater.com/', icon: '💧', category_id: 1, sort_order: 1 },
-      { name: 'Office Tools', description: '办公工具集', url: 'http://officetools.guluwater.com/', icon: '🛠️', category_id: 1, sort_order: 2 },
-      { name: 'General Methods Utils', description: '通用方法工具集', url: 'http://generalmethodsutils.guluwater.com/', icon: '🧰', category_id: 1, sort_order: 3 },
-      { name: 'Online Interface Lite', description: '在线接口（轻量版）', url: 'http://onlineinterfacelite.guluwater.com/', icon: '🔌', category_id: 1, sort_order: 4 },
-      { name: 'Online Interface Full', description: '在线接口（完整版）', url: 'http://onlineinterfacefull.guluwater.com/', icon: '🧩', category_id: 1, sort_order: 5 },
-      { name: 'Lite Image Previewer', description: '轻量图像预览器', url: 'http://liteimagepreviewer.guluwater.com/', icon: '🖼️', category_id: 1, sort_order: 6 },
-      { name: 'Papercraft', description: '纸艺工具', url: 'http://papercraft.guluwater.com/', icon: '✂️', category_id: 1, sort_order: 7 },
-      { name: 'Mock Data Generator', description: '智能数据模拟生成器', url: 'http://mockdatagenerator.guluwater.com/', icon: '🔄', category_id: 1, sort_order: 8 },
+      { name: 'VitePress 博客', description: '专业的 Vue 3 博客', url: 'https://guluwater.com/vitepress/', icon: '💧', category_id: 1, sort_order: 1 },
+      { name: 'Office Tools', description: '办公工具集', url: 'https://guluwater.com/officetools/', icon: '🛠️', category_id: 1, sort_order: 2 },
+      { name: 'General Methods Utils', description: '通用方法工具集', url: 'https://guluwater.com/generalmethodsutils/', icon: '🧰', category_id: 1, sort_order: 3 },
+      { name: 'Online Interface Lite', description: '在线接口（轻量版）', url: 'https://guluwater.com/onlineinterfacelite/', icon: '🔌', category_id: 1, sort_order: 4 },
+      { name: 'Online Interface Full', description: '在线接口（完整版）', url: 'https://guluwater.com/onlineinterfacefull/', icon: '🧩', category_id: 1, sort_order: 5 },
+      { name: 'Lite Image Previewer', description: '轻量图像预览器', url: 'https://guluwater.com/liteimagepreviewer/', icon: '🖼️', category_id: 1, sort_order: 6 },
+      { name: 'Papercraft', description: '纸艺工具', url: 'https://guluwater.com/papercraft/', icon: '✂️', category_id: 1, sort_order: 7 },
+      { name: 'Mock Data Generator', description: '智能数据模拟生成器', url: 'https://guluwater.com/mockdatagenerator/', icon: '🔄', category_id: 1, sort_order: 8 },
       
       // 前端框架 (category_id: 2)
       { name: 'Vue.js', description: '渐进式 JavaScript 框架', url: 'https://vuejs.org/', icon: '💚', category_id: 2, sort_order: 1 },

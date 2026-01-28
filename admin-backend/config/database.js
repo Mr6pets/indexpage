@@ -1,5 +1,13 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
+
+// 如果设置了强制使用模拟数据库，直接返回模拟数据库
+if (process.env.USE_MOCK_DB === 'true') {
+  console.log('⚠️ 环境变量 USE_MOCK_DB=true，使用模拟数据库');
+  module.exports = require('../database/mock-database');
+  return;
+}
+
 // 数据库连接池配置
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
