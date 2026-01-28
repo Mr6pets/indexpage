@@ -134,7 +134,17 @@ foreach ($pattern in $cleanupPatterns) {
 
 Write-Host "✅ Backend files ready (Optimized)" -ForegroundColor Green
 
-# 5. Create README
+# 4.5 Copy Nginx Configs
+Write-Host "`n📦 [4/4] Copying Nginx Configs..." -ForegroundColor Cyan
+if (Test-Path "$rootDir\nginx_dist") {
+    $nginxTarget = "$deployDir\nginx_config"
+    New-Item -ItemType Directory -Path $nginxTarget | Out-Null
+    Copy-Item -Path "$rootDir\nginx_dist\*" -Destination $nginxTarget -Recurse
+    Write-Host "✅ Nginx configs copied" -ForegroundColor Green
+}
+
+# 6. Create DEPLOY_README.md
+Write-Host "`n📝 Creating Deployment Instructions..." -ForegroundColor Cyan
 Set-Location $rootDir
 $readmeContent = "# Deployment Guide",
                  "",
@@ -148,8 +158,12 @@ $readmeContent = "# Deployment Guide",
                  "",
                  "3. 'admin-backend' folder -> /home/indexpage/admin-backend",
                  "   (Run 'npm install' inside this folder on server if needed)",
-                 "   (Start with: pm2 start ecosystem.config.js --env production)",
+                 "   (Start with: npm run pm2:start)",
                  "   (Note: 'server-config.env' contains your database settings. Edit it if needed.)",
+                 "",
+                 "4. 'nginx_config' folder -> /etc/nginx/",
+                 "   (Copy contents of conf.d to /etc/nginx/conf.d/)",
+                 "   (Run 'nginx -t' and 'systemctl restart nginx')",
                  "",
                  "## 🚨 Troubleshooting (If 502 Error):",
                  "1. Stop PM2: pm2 stop navigation-admin",
